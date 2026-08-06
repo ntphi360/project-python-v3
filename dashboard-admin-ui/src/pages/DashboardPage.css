@@ -1,0 +1,137 @@
+.dashboard-page {
+  width: 100%;
+}
+
+.dashboard-page__heading {
+  margin-bottom: 24px;
+}
+
+.dashboard-page__heading h1 {
+  margin: 0;
+  color: #172554;
+  font-size: 28px;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.dashboard-page__heading p {
+  margin: 7px 0 0;
+  color: #718096;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.kpi-card {
+  min-width: 0;
+  padding: 19px 20px 18px;
+  background: #ffffff;
+  border: 1px solid #e4eaf2;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(32, 56, 85, 0.045);
+}
+
+.kpi-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kpi-card__title {
+  min-width: 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.kpi-card__icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  place-items: center;
+  color: var(--kpi-color);
+  background: var(--kpi-background);
+  border-radius: 9px;
+}
+
+.kpi-card__value {
+  display: block;
+  margin-top: 13px;
+  color: var(--kpi-color);
+  font-size: 29px;
+  line-height: 1.15;
+  font-weight: 750;
+  letter-spacing: -0.025em;
+}
+
+.kpi-card__change {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+  color: #8190a5;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.kpi-card__change--up svg {
+  color: #16a165;
+}
+
+.kpi-card__change--down svg {
+  color: #e07a21;
+}
+
+.kpi-card--blue {
+  --kpi-color: #146ce8;
+  --kpi-background: #eaf3ff;
+}
+
+.kpi-card--orange {
+  --kpi-color: #e56f0a;
+  --kpi-background: #fff3e5;
+}
+
+.kpi-card--red {
+  --kpi-color: #ed3d45;
+  --kpi-background: #fff0f1;
+}
+
+.kpi-card--green {
+  --kpi-color: #199b5d;
+  --kpi-background: #eaf8f1;
+}
+
+@media (max-width: 1180px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .dashboard-page__heading {
+    margin-bottom: 20px;
+  }
+
+  .dashboard-page__heading h1 {
+    font-size: 24px;
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .kpi-card {
+    padding: 17px 18px;
+  }
+}
