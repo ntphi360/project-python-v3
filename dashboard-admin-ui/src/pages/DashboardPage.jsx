@@ -22,6 +22,11 @@ import {
 } from "recharts";
 import { Link } from "react-router-dom";
 
+import {
+  cases as mockCases,
+  getCaseRelations,
+  statusKeys,
+} from "../data/caseData";
 import "./DashboardPage.css";
 
 const kpiCards = [
@@ -120,56 +125,14 @@ const timelineData = [
   },
 ];
 
-const upcomingRecords = [
-  {
-    code: "HS-2024-0187",
-    name: "Cấp phép hoạt động xây dựng",
-    dueDate: "25/08/2026",
-    assignee: "Trần Văn Bình",
-    status: "Sắp hạn",
-    statusKey: "upcoming",
-  },
-  {
-    code: "HS-2024-0176",
-    name: "Cấp giấy chứng nhận PCCC",
-    dueDate: "27/08/2026",
-    assignee: "Lê Thị Hoa",
-    status: "Đang xử lý",
-    statusKey: "processing",
-  },
-  {
-    code: "HS-2024-0162",
-    name: "Đăng ký kinh doanh hộ cá thể",
-    dueDate: "20/08/2026",
-    assignee: "Phạm Văn Hùng",
-    status: "Quá hạn",
-    statusKey: "overdue",
-  },
-  {
-    code: "HS-2024-0158",
-    name: "Cấp phép kinh doanh vận tải",
-    dueDate: "28/08/2026",
-    assignee: "Nguyễn Minh Anh",
-    status: "Sắp hạn",
-    statusKey: "upcoming",
-  },
-  {
-    code: "HS-2024-0149",
-    name: "Điều chỉnh giấy phép xây dựng",
-    dueDate: "30/08/2026",
-    assignee: "Vũ Thanh Hà",
-    status: "Đang xử lý",
-    statusKey: "processing",
-  },
-  {
-    code: "HS-2024-0136",
-    name: "Xác nhận hồ sơ môi trường",
-    dueDate: "18/08/2026",
-    assignee: "Đỗ Quang Nam",
-    status: "Hoàn thành",
-    statusKey: "completed",
-  },
-];
+const attentionCases = mockCases
+  .filter((caseItem) => caseItem.status !== "Mới tiếp nhận")
+  .slice(0, 5);
+
+function formatCaseDate(value) {
+  const [year, month, day] = value.split("-");
+  return `${day}/${month}/${year}`;
+}
 
 const chartTooltipStyle = {
   border: "1px solid #e4eaf2",
@@ -445,7 +408,7 @@ function DashboardPage() {
       <article className="dashboard-card records-card">
         <div className="dashboard-card__header">
           <div>
-            <h2>Hồ sơ sắp hạn theo trạng thái</h2>
+            <h2>Hồ sơ cần chú ý</h2>
           </div>
 
           <Link className="records-card__link" to="/cases">
@@ -459,6 +422,7 @@ function DashboardPage() {
               <tr>
                 <th scope="col">Mã hồ sơ</th>
                 <th scope="col">Tên hồ sơ</th>
+                <th scope="col">Lĩnh vực</th>
                 <th scope="col">Hạn xử lý</th>
                 <th scope="col">Người phụ trách</th>
                 <th scope="col">Trạng thái</th>
@@ -466,27 +430,24 @@ function DashboardPage() {
             </thead>
 
             <tbody>
-              {upcomingRecords.slice(0, 4).map((record) => (
-                <tr key={record.code}>
-                  <td className="records-table__code">
-                    {record.code}
-                  </td>
+              {attentionCases.map((caseItem) => {
+                const { field, user } = getCaseRelations(caseItem);
 
-                  <td>{record.name}</td>
-
-                  <td>{record.dueDate}</td>
-
-                  <td>{record.assignee}</td>
-
-                  <td>
-                    <span
-                      className={`status-badge status-badge--${record.statusKey}`}
-                    >
-                      {record.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+                return (
+                  <tr key={caseItem.id}>
+                    <td className="records-table__code">{caseItem.caseCode}</td>
+                    <td>{caseItem.caseName}</td>
+                    <td>{field?.name ?? "—"}</td>
+                    <td>{formatCaseDate(caseItem.dueDate)}</td>
+                    <td>{user?.fullName ?? "—"}</td>
+                    <td>
+                      <span className={`status-badge status-badge--${statusKeys[caseItem.status]}`}>
+                        {caseItem.status}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
