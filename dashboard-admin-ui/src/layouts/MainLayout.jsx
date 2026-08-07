@@ -1,9 +1,11 @@
+import { useState } from "react";
 import {
   Bell,
   BellRing,
   Building2,
   ChartNoAxesCombined,
   ChevronDown,
+  ChevronRight,
   FileText,
   FolderKanban,
   Import,
@@ -15,7 +17,7 @@ import {
   Users,
   Workflow,
 } from "lucide-react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 
 const menuItems = [
   { label: "Dashboard", path: "/", icon: LayoutDashboard },
@@ -23,11 +25,11 @@ const menuItems = [
   { label: "Cảnh báo", path: "/alerts", icon: BellRing },
   { label: "Thông báo", path: "/notifications", icon: Bell },
   { label: "Thống kê & Báo cáo", path: "/reports", icon: ChartNoAxesCombined },
-  // { label: "Import dữ liệu", path: "/import", icon: Import },
-  // { label: "Người dùng", path: "/users", icon: Users },
-  // { label: "Phòng ban", path: "/departments", icon: Building2 },
-  // { label: "Thủ tục", path: "/procedures", icon: Workflow },
-  // { label: "Cài đặt", path: "/settings", icon: Settings },
+  { label: "Import dữ liệu", path: "/import", icon: Import },
+  { label: "Người dùng", path: "/users", icon: Users },
+  { label: "Phòng ban", path: "/departments", icon: Building2 },
+  { label: "Thủ tục", path: "/procedures", icon: Workflow },
+  { label: "Cài đặt", path: "/settings", icon: Settings },
 ];
 
 const pageTitles = {
@@ -43,13 +45,34 @@ const pageTitles = {
   "/settings": "Cài đặt",
 };
 
-function Sidebar() {
+function getBreadcrumbs(pathname) {
+  if (pathname === "/") return [{ label: "Dashboard", path: "/" }];
+
+  const segments = pathname.split("/").filter(Boolean);
+
+  return segments.map((_, index) => {
+    const path = `/${segments.slice(0, index + 1).join("/")}`;
+    return {
+      label: pageTitles[path] ?? "Chi tiết hồ sơ",
+      path,
+    };
+  });
+}
+
+function Sidebar({ isCollapsed, isMobileOpen, onNavigate }) {
   return (
-    <aside className="sidebar">
+    <aside
+      className={`sidebar${isMobileOpen ? " sidebar--mobile-open" : ""}`}
+      id="main-sidebar"
+    >
       <div className="sidebar__brand">
+        <div className="sidebar__logo" aria-hidden="true">
+          <FileText size={22} strokeWidth={2.2} />
+          <ShieldCheck className="sidebar__logo-badge" size={12} strokeWidth={2.6} />
+        </div>
         <div className="sidebar__brand-text">
           <strong>HỆ THỐNG</strong>
-          <span>QUẢN LÝ GIÁM SÁT HỒ SƠ TRỰC TUYẾN TRỄ HẠN</span>
+          <span>QUẢN LÝ HỒ SƠ</span>
         </div>
       </div>
 
@@ -61,6 +84,8 @@ function Sidebar() {
             }
             end={path === "/"}
             key={path}
+            onClick={onNavigate}
+            title={isCollapsed ? label : undefined}
             to={path}
           >
             <Icon className="sidebar__link-icon" size={19} strokeWidth={1.8} />
@@ -72,17 +97,41 @@ function Sidebar() {
   );
 }
 
-function Header({ title }) {
+function Breadcrumbs({ items }) {
+  return (
+    <nav className="breadcrumbs" aria-label="Breadcrumb">
+      {items.map((item, index) => {
+        const isLast = index === items.length - 1;
+
+        return (
+          <span className="breadcrumbs__item" key={item.path}>
+            {index > 0 && <ChevronRight size={13} aria-hidden="true" />}
+            {isLast ? (
+              <span aria-current="page">{item.label}</span>
+            ) : (
+              <Link to={item.path}>{item.label}</Link>
+            )}
+          </span>
+        );
+      })}
+    </nav>
+  );
+}
+
+function Header({ breadcrumbs, isMobileOpen, onToggleSidebar }) {
   return (
     <header className="app-header">
       <div className="app-header__start">
-        <button className="icon-button app-header__menu" type="button" aria-label="Mở menu">
-          <Menu size={22} />
+        <button
+          aria-controls="main-sidebar"
+          aria-label={isMobileOpen ? "Đóng menu" : "Mở hoặc thu gọn menu"}
+          className="icon-button app-header__menu"
+          type="button"
+          onClick={onToggleSidebar}
+        >
+          <Menu size={20} />
         </button>
-        <div>
-          <p className="app-header__eyebrow">Hệ thống quản lý giám sát hồ sơ trực tuyến trễ hạn</p>
-          <h1 className="app-header__title">{title}</h1>
-        </div>
+        <Breadcrumbs items={breadcrumbs} />
       </div>
 
       <div className="app-header__actions">
@@ -109,13 +158,48 @@ function Header({ title }) {
 
 function MainLayout() {
   const { pathname } = useLocation();
-  const title = pageTitles[pathname] ?? "Quản lý hồ sơ";
+  const breadcrumbs = getBreadcrumbs(pathname);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  function toggleSidebar() {
+    if (window.matchMedia("(max-width: 760px)").matches) {
+      setIsMobileOpen((isOpen) => !isOpen);
+      return;
+    }
+
+    setIsCollapsed((isOpen) => !isOpen);
+  }
+
+  function closeMobileSidebar() {
+    setIsMobileOpen(false);
+  }
 
   return (
-    <div className="main-layout">
-      <Sidebar />
+    <div
+      className={`main-layout${isCollapsed ? " main-layout--collapsed" : ""}${
+        isMobileOpen ? " main-layout--mobile-open" : ""
+      }`}
+    >
+      <Sidebar
+        isCollapsed={isCollapsed}
+        isMobileOpen={isMobileOpen}
+        onNavigate={closeMobileSidebar}
+      />
+      {isMobileOpen && (
+        <button
+          aria-label="Đóng menu"
+          className="sidebar-overlay"
+          type="button"
+          onClick={closeMobileSidebar}
+        />
+      )}
       <div className="main-layout__body">
-        <Header title={title} />
+        <Header
+          breadcrumbs={breadcrumbs}
+          isMobileOpen={isMobileOpen}
+          onToggleSidebar={toggleSidebar}
+        />
         <main className="main-content">
           <Outlet />
         </main>
