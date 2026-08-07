@@ -26,14 +26,14 @@ export const procedures = [
 ];
 
 export const users = [
-  { id: "user-lan", fullName: "Nguyễn Thị Lan", departmentId: "dept-justice" },
-  { id: "user-minh", fullName: "Trần Quốc Minh", departmentId: "dept-justice" },
-  { id: "user-binh", fullName: "Trần Văn Bình", departmentId: "dept-urban" },
-  { id: "user-anh", fullName: "Nguyễn Minh Anh", departmentId: "dept-urban" },
-  { id: "user-hung", fullName: "Phạm Văn Hùng", departmentId: "dept-economy" },
-  { id: "user-thao", fullName: "Lê Thu Thảo", departmentId: "dept-economy" },
-  { id: "user-nam", fullName: "Đỗ Quang Nam", departmentId: "dept-environment" },
-  { id: "user-ha", fullName: "Vũ Thanh Hà", departmentId: "dept-environment" },
+  { id: "user-lan", fullName: "Nguyễn Thị Lan", departmentId: "dept-justice", email: "lan.nguyen@hanhchinh.vn", phone: "0901 234 501" },
+  { id: "user-minh", fullName: "Trần Quốc Minh", departmentId: "dept-justice", email: "minh.tran@hanhchinh.vn", phone: "0901 234 502" },
+  { id: "user-binh", fullName: "Trần Văn Bình", departmentId: "dept-urban", email: "binh.tran@hanhchinh.vn", phone: "0901 234 503" },
+  { id: "user-anh", fullName: "Nguyễn Minh Anh", departmentId: "dept-urban", email: "anh.nguyen@hanhchinh.vn", phone: "0901 234 504" },
+  { id: "user-hung", fullName: "Phạm Văn Hùng", departmentId: "dept-economy", email: "hung.pham@hanhchinh.vn", phone: "0901 234 505" },
+  { id: "user-thao", fullName: "Lê Thu Thảo", departmentId: "dept-economy", email: "thao.le@hanhchinh.vn", phone: "0901 234 506" },
+  { id: "user-nam", fullName: "Đỗ Quang Nam", departmentId: "dept-environment", email: "nam.do@hanhchinh.vn", phone: "0901 234 507" },
+  { id: "user-ha", fullName: "Vũ Thanh Hà", departmentId: "dept-environment", email: "ha.vu@hanhchinh.vn", phone: "0901 234 508" },
 ];
 
 export const caseStatuses = [
@@ -45,20 +45,20 @@ export const caseStatuses = [
 ];
 
 export const cases = [
-  { id: "case-001", caseCode: "HS-2026-0187", caseName: "Cấp phép xây dựng nhà ở ông Nguyễn Văn An", procedureId: "proc-build-new", assignedUserId: "user-binh", receivedDate: "2026-08-06", dueDate: "2026-08-21", completedDate: "", status: "Sắp hạn", note: "Hồ sơ đã đầy đủ, đang thẩm định bản vẽ." },
-  { id: "case-002", caseCode: "HS-2026-0176", caseName: "Điều chỉnh giấy phép xây dựng công trình Minh Phát", procedureId: "proc-build-adjust", assignedUserId: "user-anh", receivedDate: "2026-08-04", dueDate: "2026-08-14", completedDate: "", status: "Đang xử lý", note: "Đang đối chiếu nội dung điều chỉnh." },
-  { id: "case-003", caseCode: "HS-2026-0162", caseName: "Đăng ký hộ kinh doanh Nguyễn Gia", procedureId: "proc-business", assignedUserId: "user-hung", receivedDate: "2026-07-28", dueDate: "2026-08-02", completedDate: "", status: "Quá hạn", note: "Chờ bổ sung giấy tờ chứng minh địa điểm kinh doanh." },
-  { id: "case-004", caseCode: "HS-2026-0158", caseName: "Cấp phép vận tải Công ty An Phú", procedureId: "proc-transport", assignedUserId: "user-anh", receivedDate: "2026-08-03", dueDate: "2026-08-13", completedDate: "", status: "Sắp hạn", note: "Đang kiểm tra điều kiện phương tiện." },
-  { id: "case-005", caseCode: "HS-2026-0149", caseName: "Đăng ký biến động thửa đất số 128", procedureId: "proc-land", assignedUserId: "user-ha", receivedDate: "2026-07-30", dueDate: "2026-08-14", completedDate: "", status: "Đang xử lý", note: "Đã chuyển bộ phận đo đạc xác minh." },
-  { id: "case-006", caseCode: "HS-2026-0136", caseName: "Xác nhận môi trường cơ sở Thành Công", procedureId: "proc-environment", assignedUserId: "user-nam", receivedDate: "2026-07-20", dueDate: "2026-07-30", completedDate: "2026-07-29", status: "Hoàn thành", note: "Đã trả kết quả cho tổ chức." },
-  { id: "case-007", caseCode: "HS-2026-0128", caseName: "Đăng ký khai sinh cho Nguyễn Minh Khôi", procedureId: "proc-birth", assignedUserId: "user-lan", receivedDate: "2026-08-07", dueDate: "2026-08-10", completedDate: "", status: "Mới tiếp nhận", note: "Hồ sơ tiếp nhận trực tuyến." },
-  { id: "case-008", caseCode: "HS-2026-0115", caseName: "Đăng ký kết hôn Trần Văn Long - Lê Mai", procedureId: "proc-marriage", assignedUserId: "user-minh", receivedDate: "2026-08-05", dueDate: "2026-08-10", completedDate: "", status: "Đang xử lý", note: "Đang xác minh thông tin cư trú." },
-  { id: "case-009", caseCode: "HS-2026-0107", caseName: "Thay đổi ngành nghề hộ kinh doanh Hoàng Hà", procedureId: "proc-business-change", assignedUserId: "user-thao", receivedDate: "2026-08-06", dueDate: "2026-08-09", completedDate: "", status: "Sắp hạn", note: "Chờ lãnh đạo phê duyệt." },
-  { id: "case-010", caseCode: "HS-2026-0094", caseName: "Cấp phép xây dựng nhà ở bà Phạm Thu", procedureId: "proc-build-new", assignedUserId: "user-binh", receivedDate: "2026-07-15", dueDate: "2026-07-30", completedDate: "", status: "Quá hạn", note: "Cần làm rõ chỉ giới xây dựng." },
-  { id: "case-011", caseCode: "HS-2026-0082", caseName: "Đăng ký biến động đất đai hộ ông Lâm", procedureId: "proc-land", assignedUserId: "user-nam", receivedDate: "2026-07-18", dueDate: "2026-08-02", completedDate: "2026-08-01", status: "Hoàn thành", note: "Đã cập nhật giấy chứng nhận." },
-  { id: "case-012", caseCode: "HS-2026-0074", caseName: "Đăng ký hộ kinh doanh Quán Mộc", procedureId: "proc-business", assignedUserId: "user-hung", receivedDate: "2026-08-05", dueDate: "2026-08-10", completedDate: "", status: "Đang xử lý", note: "Hồ sơ hợp lệ." },
-  { id: "case-013", caseCode: "HS-2026-0068", caseName: "Đăng ký khai sinh cho Lê Gia Hân", procedureId: "proc-birth", assignedUserId: "user-lan", receivedDate: "2026-08-04", dueDate: "2026-08-07", completedDate: "2026-08-06", status: "Hoàn thành", note: "Đã trả kết quả trực tuyến." },
-  { id: "case-014", caseCode: "HS-2026-0053", caseName: "Xác nhận môi trường xưởng sản xuất Đại Nam", procedureId: "proc-environment", assignedUserId: "user-ha", receivedDate: "2026-08-07", dueDate: "2026-08-17", completedDate: "", status: "Mới tiếp nhận", note: "Đang kiểm tra thành phần hồ sơ." },
+  { id: "case-001", caseCode: "HS-2026-0187", caseName: "Cấp phép xây dựng nhà ở ông Nguyễn Văn An", procedureId: "proc-build-new", assignedUserId: "user-binh", receivedDate: "2026-08-06", dueDate: "2026-08-21T17:00:00", completedDate: "", status: "Sắp hạn", note: "Hồ sơ đã đầy đủ, đang thẩm định bản vẽ." },
+  { id: "case-002", caseCode: "HS-2026-0176", caseName: "Điều chỉnh giấy phép xây dựng công trình Minh Phát", procedureId: "proc-build-adjust", assignedUserId: "user-anh", receivedDate: "2026-08-04", dueDate: "2026-08-14T16:30:00", completedDate: "", status: "Đang xử lý", note: "Đang đối chiếu nội dung điều chỉnh." },
+  { id: "case-003", caseCode: "HS-2026-0162", caseName: "Đăng ký hộ kinh doanh Nguyễn Gia", procedureId: "proc-business", assignedUserId: "user-hung", receivedDate: "2026-07-28", dueDate: "2026-08-02T17:00:00", completedDate: "", status: "Quá hạn", note: "Chờ bổ sung giấy tờ chứng minh địa điểm kinh doanh." },
+  { id: "case-004", caseCode: "HS-2026-0158", caseName: "Cấp phép vận tải Công ty An Phú", procedureId: "proc-transport", assignedUserId: "user-anh", receivedDate: "2026-08-03", dueDate: "2026-08-13T15:45:00", completedDate: "", status: "Sắp hạn", note: "Đang kiểm tra điều kiện phương tiện." },
+  { id: "case-005", caseCode: "HS-2026-0149", caseName: "Đăng ký biến động thửa đất số 128", procedureId: "proc-land", assignedUserId: "user-ha", receivedDate: "2026-07-30", dueDate: "2026-08-14T17:00:00", completedDate: "", status: "Đang xử lý", note: "Đã chuyển bộ phận đo đạc xác minh." },
+  { id: "case-006", caseCode: "HS-2026-0136", caseName: "Xác nhận môi trường cơ sở Thành Công", procedureId: "proc-environment", assignedUserId: "user-nam", receivedDate: "2026-07-20", dueDate: "2026-07-30T17:00:00", completedDate: "2026-07-29", status: "Hoàn thành", note: "Đã trả kết quả cho tổ chức." },
+  { id: "case-007", caseCode: "HS-2026-0128", caseName: "Đăng ký khai sinh cho Nguyễn Minh Khôi", procedureId: "proc-birth", assignedUserId: "user-lan", receivedDate: "2026-08-07", dueDate: "2026-08-07T23:30:00", completedDate: "", status: "Mới tiếp nhận", note: "Hồ sơ tiếp nhận trực tuyến." },
+  { id: "case-008", caseCode: "HS-2026-0115", caseName: "Đăng ký kết hôn Trần Văn Long - Lê Mai", procedureId: "proc-marriage", assignedUserId: "user-minh", receivedDate: "2026-08-05", dueDate: "2026-08-10T10:30:00", completedDate: "", status: "Đang xử lý", note: "Đang xác minh thông tin cư trú." },
+  { id: "case-009", caseCode: "HS-2026-0107", caseName: "Thay đổi ngành nghề hộ kinh doanh Hoàng Hà", procedureId: "proc-business-change", assignedUserId: "user-thao", receivedDate: "2026-08-06", dueDate: "2026-08-09T11:15:00", completedDate: "", status: "Sắp hạn", note: "Chờ lãnh đạo phê duyệt." },
+  { id: "case-010", caseCode: "HS-2026-0094", caseName: "Cấp phép xây dựng nhà ở bà Phạm Thu", procedureId: "proc-build-new", assignedUserId: "user-binh", receivedDate: "2026-07-15", dueDate: "2026-07-30T16:00:00", completedDate: "", status: "Quá hạn", note: "Cần làm rõ chỉ giới xây dựng." },
+  { id: "case-011", caseCode: "HS-2026-0082", caseName: "Đăng ký biến động đất đai hộ ông Lâm", procedureId: "proc-land", assignedUserId: "user-nam", receivedDate: "2026-07-18", dueDate: "2026-08-02T17:00:00", completedDate: "2026-08-01", status: "Hoàn thành", note: "Đã cập nhật giấy chứng nhận." },
+  { id: "case-012", caseCode: "HS-2026-0074", caseName: "Đăng ký hộ kinh doanh Quán Mộc", procedureId: "proc-business", assignedUserId: "user-hung", receivedDate: "2026-08-05", dueDate: "2026-08-10T14:00:00", completedDate: "", status: "Đang xử lý", note: "Hồ sơ hợp lệ." },
+  { id: "case-013", caseCode: "HS-2026-0068", caseName: "Đăng ký khai sinh cho Lê Gia Hân", procedureId: "proc-birth", assignedUserId: "user-lan", receivedDate: "2026-08-04", dueDate: "2026-08-07T09:00:00", completedDate: "2026-08-06", status: "Hoàn thành", note: "Đã trả kết quả trực tuyến." },
+  { id: "case-014", caseCode: "HS-2026-0053", caseName: "Xác nhận môi trường xưởng sản xuất Đại Nam", procedureId: "proc-environment", assignedUserId: "user-ha", receivedDate: "2026-08-07", dueDate: "2026-08-17T17:00:00", completedDate: "", status: "Mới tiếp nhận", note: "Đang kiểm tra thành phần hồ sơ." },
 ];
 
 export const caseHistories = [

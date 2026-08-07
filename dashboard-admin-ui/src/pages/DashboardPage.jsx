@@ -130,7 +130,7 @@ const attentionCases = mockCases
   .slice(0, 5);
 
 function formatCaseDate(value) {
-  const [year, month, day] = value.split("-");
+  const [year, month, day] = value.slice(0, 10).split("-");
   return `${day}/${month}/${year}`;
 }
 

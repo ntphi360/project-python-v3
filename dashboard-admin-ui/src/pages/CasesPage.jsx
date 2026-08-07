@@ -41,7 +41,7 @@ const emptyForm = {
 
 function formatDate(value) {
   if (!value) return "—";
-  const [year, month, day] = value.split("-");
+  const [year, month, day] = value.slice(0, 10).split("-");
   return `${day}/${month}/${year}`;
 }
 
@@ -150,7 +150,7 @@ function getCaseFormValues(caseItem) {
     departmentId: department?.id ?? "",
     assignedUserId: caseItem.assignedUserId,
     receivedDate: caseItem.receivedDate,
-    dueDate: caseItem.dueDate,
+    dueDate: caseItem.dueDate.slice(0, 10),
     status: caseItem.status,
     note: caseItem.note,
   };
@@ -201,7 +201,7 @@ function CaseForm({ existingCases, initialCase, onClose, onSave }) {
       procedureId: form.procedureId,
       assignedUserId: form.assignedUserId,
       receivedDate: form.receivedDate,
-      dueDate: form.dueDate,
+      dueDate: `${form.dueDate}T17:00:00`,
       completedDate: form.status === "Hoàn thành"
         ? initialCase?.completedDate || new Date().toISOString().slice(0, 10)
         : "",
