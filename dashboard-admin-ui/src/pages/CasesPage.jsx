@@ -35,6 +35,7 @@ const emptyForm = {
   assignedUserId: "",
   receivedDate: "",
   dueDate: "",
+  appointmentReturnDate: "",
   status: "Mới tiếp nhận",
   note: "",
 };
@@ -49,6 +50,10 @@ function formatDateTime(value) {
   if (!value) return "—";
   const [date, time] = value.split("T");
   return `${formatDate(date)} ${time}`;
+}
+
+function normalizeDateTime(value) {
+  return value.length === 16 ? `${value}:00` : value;
 }
 
 function StatusBadge({ status }) {
@@ -91,8 +96,8 @@ function CaseDetails({ caseItem, histories, onClose }) {
     ["Phòng ban xử lý", department?.name],
     ["Người xử lý", user?.fullName],
     ["Ngày tiếp nhận", formatDate(caseItem.receivedDate)],
-    ["Hạn xử lý", formatDate(caseItem.dueDate)],
-    ["Ngày hoàn thành", formatDate(caseItem.completedDate)],
+    ["Ngày hẹn trả", formatDateTime(caseItem.appointmentReturnDate)],
+    ["Ngày hoàn tất", formatDate(caseItem.completedDate)],
   ];
 
   return (
@@ -100,7 +105,7 @@ function CaseDetails({ caseItem, histories, onClose }) {
       <div className="case-modal__body">
         <dl className="case-details">
           {details.map(([label, value]) => (
-            <div className="case-details__item" key={label}>
+            <div className={`case-details__item${label === "Ngày hẹn trả" ? " case-details__item--appointment" : ""}`} key={label}>
               <dt>{label}</dt>
               <dd>{value || "—"}</dd>
             </div>
@@ -151,6 +156,7 @@ function getCaseFormValues(caseItem) {
     assignedUserId: caseItem.assignedUserId,
     receivedDate: caseItem.receivedDate,
     dueDate: caseItem.dueDate.slice(0, 10),
+    appointmentReturnDate: caseItem.appointmentReturnDate.slice(0, 16),
     status: caseItem.status,
     note: caseItem.note,
   };
@@ -181,6 +187,7 @@ function CaseForm({ existingCases, initialCase, onClose, onSave }) {
 
   function handleSubmit(event) {
     event.preventDefault();
+    const submittedAppointmentReturnDate = event.currentTarget.elements.appointmentReturnDate.value;
     const procedure = procedures.find((item) => item.id === form.procedureId);
     const field = fields.find((item) => item.id === form.fieldId);
     const user = users.find((item) => item.id === form.assignedUserId);
@@ -202,6 +209,7 @@ function CaseForm({ existingCases, initialCase, onClose, onSave }) {
       assignedUserId: form.assignedUserId,
       receivedDate: form.receivedDate,
       dueDate: `${form.dueDate}T17:00:00`,
+      appointmentReturnDate: normalizeDateTime(submittedAppointmentReturnDate),
       completedDate: form.status === "Hoàn thành"
         ? initialCase?.completedDate || new Date().toISOString().slice(0, 10)
         : "",
@@ -253,6 +261,10 @@ function CaseForm({ existingCases, initialCase, onClose, onSave }) {
           <label>
             <span>Ngày tiếp nhận <em>*</em></span>
             <input required type="date" value={form.receivedDate} onChange={(event) => updateForm("receivedDate", event.target.value)} />
+          </label>
+          <label>
+            <span>Ngày hẹn trả <em>*</em></span>
+            <input min={form.receivedDate ? `${form.receivedDate}T00:00` : undefined} name="appointmentReturnDate" required type="datetime-local" value={form.appointmentReturnDate} onChange={(event) => updateForm("appointmentReturnDate", event.target.value)} />
           </label>
           <label>
             <span>Hạn xử lý <em>*</em></span>
@@ -476,7 +488,7 @@ function CasesPage() {
           <table className="cases-table">
             <thead>
               <tr>
-                <th>Mã hồ sơ</th><th>Tên hồ sơ</th><th>Lĩnh vực</th><th>Thủ tục hành chính</th><th>Phòng ban</th><th>Người xử lý</th><th>Hạn xử lý</th><th>Trạng thái</th><th>Thao tác</th>
+                <th>Mã hồ sơ</th><th>Tên hồ sơ</th><th>Lĩnh vực</th><th>Thủ tục hành chính</th><th>Phòng ban</th><th>Người xử lý</th><th>Ngày tiếp nhận</th><th>Ngày hẹn trả</th><th>Trạng thái</th><th>Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -490,7 +502,8 @@ function CasesPage() {
                     <td>{procedure?.name ?? "—"}</td>
                     <td>{department?.name ?? "—"}</td>
                     <td>{user?.fullName ?? "—"}</td>
-                    <td>{formatDate(caseItem.dueDate)}</td>
+                    <td>{formatDate(caseItem.receivedDate)}</td>
+                    <td>{formatDateTime(caseItem.appointmentReturnDate)}</td>
                     <td><StatusBadge status={caseItem.status} /></td>
                     <td>
                       <div className="cases-row-actions">
@@ -502,7 +515,7 @@ function CasesPage() {
                   </tr>
                 );
               })}
-              {!pageCases.length && <tr><td className="cases-table__empty" colSpan="9">Không tìm thấy hồ sơ phù hợp.</td></tr>}
+              {!pageCases.length && <tr><td className="cases-table__empty" colSpan="10">Không tìm thấy hồ sơ phù hợp.</td></tr>}
             </tbody>
           </table>
         </div>

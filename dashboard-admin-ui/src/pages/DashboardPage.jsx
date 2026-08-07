@@ -25,7 +25,6 @@ import { Link } from "react-router-dom";
 import {
   cases as mockCases,
   getCaseRelations,
-  statusKeys,
 } from "../data/caseData";
 import "./DashboardPage.css";
 
@@ -125,13 +124,35 @@ const timelineData = [
   },
 ];
 
+const dashboardNow = Date.now();
+
+function getAttentionStatus(appointmentReturnDate) {
+  const appointmentDate = new Date(appointmentReturnDate);
+  const currentDate = new Date(dashboardNow);
+
+  if (appointmentDate.getTime() < dashboardNow) return { label: "Quá hạn", key: "overdue", priority: 0 };
+  if (
+    appointmentDate.getFullYear() === currentDate.getFullYear()
+    && appointmentDate.getMonth() === currentDate.getMonth()
+    && appointmentDate.getDate() === currentDate.getDate()
+  ) return { label: "Đến hạn hôm nay", key: "today", priority: 1 };
+  return { label: "Sắp hạn", key: "upcoming", priority: 2 };
+}
+
 const attentionCases = mockCases
-  .filter((caseItem) => caseItem.status !== "Mới tiếp nhận")
+  .filter((caseItem) => caseItem.status !== "Hoàn thành")
+  .map((caseItem) => ({
+    ...caseItem,
+    attention: getAttentionStatus(caseItem.appointmentReturnDate),
+  }))
+  .sort((first, second) => first.attention.priority - second.attention.priority
+    || new Date(first.appointmentReturnDate) - new Date(second.appointmentReturnDate))
   .slice(0, 5);
 
-function formatCaseDate(value) {
-  const [year, month, day] = value.slice(0, 10).split("-");
-  return `${day}/${month}/${year}`;
+function formatCaseDateTime(value) {
+  const [date, time] = value.split("T");
+  const [year, month, day] = date.split("-");
+  return `${day}/${month}/${year} ${time.slice(0, 5)}`;
 }
 
 const chartTooltipStyle = {
@@ -423,7 +444,7 @@ function DashboardPage() {
                 <th scope="col">Mã hồ sơ</th>
                 <th scope="col">Tên hồ sơ</th>
                 <th scope="col">Lĩnh vực</th>
-                <th scope="col">Hạn xử lý</th>
+                <th scope="col">Ngày hẹn trả</th>
                 <th scope="col">Người xử lý</th>
                 <th scope="col">Trạng thái</th>
               </tr>
@@ -438,11 +459,11 @@ function DashboardPage() {
                     <td className="records-table__code">{caseItem.caseCode}</td>
                     <td>{caseItem.caseName}</td>
                     <td>{field?.name ?? "—"}</td>
-                    <td>{formatCaseDate(caseItem.dueDate)}</td>
+                    <td>{formatCaseDateTime(caseItem.appointmentReturnDate)}</td>
                     <td>{user?.fullName ?? "—"}</td>
                     <td>
-                      <span className={`status-badge status-badge--${statusKeys[caseItem.status]}`}>
-                        {caseItem.status}
+                      <span className={`status-badge status-badge--${caseItem.attention.key}`}>
+                        {caseItem.attention.label}
                       </span>
                     </td>
                   </tr>

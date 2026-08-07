@@ -37,8 +37,8 @@ function formatDateTime(value) {
   return `${day}/${month}/${year} ${time}`;
 }
 
-function getAlertLevel(dueDate, now) {
-  const due = new Date(dueDate);
+function getAlertLevel(appointmentReturnDate, now) {
+  const due = new Date(appointmentReturnDate);
   const current = new Date(now);
 
   if (due.getTime() < now) return "Quá hạn";
@@ -58,8 +58,8 @@ function getAlertKey(level) {
   }[level];
 }
 
-function formatCountdown(dueDate, now) {
-  const difference = new Date(dueDate).getTime() - now;
+function formatCountdown(appointmentReturnDate, now) {
+  const difference = new Date(appointmentReturnDate).getTime() - now;
   const totalSeconds = Math.floor(Math.abs(difference) / 1000);
   const days = Math.floor(totalSeconds / 86400);
   const hours = Math.floor((totalSeconds % 86400) / 3600);
@@ -91,7 +91,7 @@ function AlertModal({ children, onClose, title }) {
 
 function CaseAlertDetails({ caseItem, now, onClose }) {
   const { department, field, procedure, user } = getCaseRelations(caseItem);
-  const alertLevel = getAlertLevel(caseItem.dueDate, now);
+  const alertLevel = getAlertLevel(caseItem.appointmentReturnDate, now);
   const details = [
     ["Mã hồ sơ", caseItem.caseCode],
     ["Tên hồ sơ", caseItem.caseName],
@@ -100,7 +100,8 @@ function CaseAlertDetails({ caseItem, now, onClose }) {
     ["Phòng ban", department?.name],
     ["Người xử lý", user?.fullName],
     ["Hạn xử lý", formatDateTime(caseItem.dueDate)],
-    ["Thời hạn", formatCountdown(caseItem.dueDate, now)],
+    ["Ngày hẹn trả", formatDateTime(caseItem.appointmentReturnDate)],
+    ["Thời hạn", formatCountdown(caseItem.appointmentReturnDate, now)],
   ];
 
   return (
@@ -118,11 +119,12 @@ function CaseAlertDetails({ caseItem, now, onClose }) {
 }
 
 function createDefaultMessage(caseItem, now) {
-  const countdown = formatCountdown(caseItem.dueDate, now);
+  const countdown = formatCountdown(caseItem.appointmentReturnDate, now);
+  const appointmentReturnDate = formatDateTime(caseItem.appointmentReturnDate);
   const overdue = countdown.startsWith("Quá hạn");
   return overdue
-    ? `Hồ sơ ${caseItem.caseCode} - ${caseItem.caseName} đã ${countdown.toLocaleLowerCase("vi")}. Vui lòng kiểm tra và xử lý.`
-    : `Hồ sơ ${caseItem.caseCode} - ${caseItem.caseName} ${countdown.toLocaleLowerCase("vi")} trước hạn xử lý. Vui lòng kiểm tra và xử lý hồ sơ đúng tiến độ.`;
+    ? `Hồ sơ ${caseItem.caseCode} - ${caseItem.caseName} có ngày hẹn trả ${appointmentReturnDate} và hiện đã ${countdown.toLocaleLowerCase("vi")}. Vui lòng kiểm tra và xử lý hồ sơ.`
+    : `Hồ sơ ${caseItem.caseCode} - ${caseItem.caseName} có ngày hẹn trả ${appointmentReturnDate}. Hiện ${countdown.toLocaleLowerCase("vi")} trước ngày hẹn trả. Vui lòng kiểm tra và xử lý hồ sơ đúng tiến độ.`;
 }
 
 function ReminderModal({ caseItem, now, onClose, onSend }) {
@@ -130,7 +132,7 @@ function ReminderModal({ caseItem, now, onClose, onSend }) {
   const [selectedChannels, setSelectedChannels] = useState([]);
   const [message, setMessage] = useState(() => createDefaultMessage(caseItem, now));
   const [error, setError] = useState("");
-  const alertLevel = getAlertLevel(caseItem.dueDate, now);
+  const alertLevel = getAlertLevel(caseItem.appointmentReturnDate, now);
   const allSelected = selectedChannels.length === channels.length;
   const details = [
     ["Mã hồ sơ", caseItem.caseCode],
@@ -142,7 +144,8 @@ function ReminderModal({ caseItem, now, onClose, onSend }) {
     ["Email", user?.email],
     ["Số điện thoại", user?.phone],
     ["Hạn xử lý", formatDateTime(caseItem.dueDate)],
-    ["Thời hạn", formatCountdown(caseItem.dueDate, now)],
+    ["Ngày hẹn trả", formatDateTime(caseItem.appointmentReturnDate)],
+    ["Thời hạn", formatCountdown(caseItem.appointmentReturnDate, now)],
   ];
 
   function toggleChannel(channelId) {
@@ -226,7 +229,7 @@ function AlertsPage() {
 
   const alertCases = useMemo(() => cases
     .filter((caseItem) => caseItem.status !== "Hoàn thành")
-    .map((caseItem) => ({ ...caseItem, alertLevel: getAlertLevel(caseItem.dueDate, now) })), [now]);
+    .map((caseItem) => ({ ...caseItem, alertLevel: getAlertLevel(caseItem.appointmentReturnDate, now) })), [now]);
 
   const filteredProcedures = procedures.filter((item) => !draftFilters.fieldId || item.fieldId === draftFilters.fieldId);
   const filteredUsers = users.filter((item) => !draftFilters.departmentId || item.departmentId === draftFilters.departmentId);
@@ -307,19 +310,19 @@ function AlertsPage() {
         <div className="cases-table-card__header"><h2>Danh sách cảnh báo</h2><span>{filteredCases.length} hồ sơ</span></div>
         <div className="cases-table-wrap">
           <table className="cases-table alerts-table">
-            <thead><tr><th>Mã hồ sơ</th><th>Tên hồ sơ</th><th>Lĩnh vực</th><th>Thủ tục hành chính</th><th>Phòng ban</th><th>Người xử lý</th><th>Hạn xử lý</th><th>Thời hạn</th><th>Mức cảnh báo</th><th>Thao tác</th></tr></thead>
+            <thead><tr><th>Mã hồ sơ</th><th>Tên hồ sơ</th><th>Lĩnh vực</th><th>Thủ tục hành chính</th><th>Phòng ban</th><th>Người xử lý</th><th>Hạn xử lý</th><th>Ngày hẹn trả</th><th>Thời hạn</th><th>Mức cảnh báo</th><th>Thao tác</th></tr></thead>
             <tbody>
               {filteredCases.map((caseItem) => {
                 const { department, field, procedure, user } = getCaseRelations(caseItem);
                 return (
                   <tr key={caseItem.id}>
-                    <td className="cases-table__code">{caseItem.caseCode}</td><td className="cases-table__name">{caseItem.caseName}</td><td>{field?.name}</td><td>{procedure?.name}</td><td>{department?.name}</td><td>{user?.fullName}</td><td>{formatDateTime(caseItem.dueDate)}</td>
-                    <td className={`alerts-countdown alerts-countdown--${getAlertKey(caseItem.alertLevel)}`}>{formatCountdown(caseItem.dueDate, now)}</td><td><AlertBadge level={caseItem.alertLevel} /></td>
+                    <td className="cases-table__code">{caseItem.caseCode}</td><td className="cases-table__name">{caseItem.caseName}</td><td>{field?.name}</td><td>{procedure?.name}</td><td>{department?.name}</td><td>{user?.fullName}</td><td>{formatDateTime(caseItem.dueDate)}</td><td>{formatDateTime(caseItem.appointmentReturnDate)}</td>
+                    <td className={`alerts-countdown alerts-countdown--${getAlertKey(caseItem.alertLevel)}`}>{formatCountdown(caseItem.appointmentReturnDate, now)}</td><td><AlertBadge level={caseItem.alertLevel} /></td>
                     <td><div className="cases-row-actions"><button aria-label={`Xem hồ sơ ${caseItem.caseCode}`} className="cases-action-button" title="Xem hồ sơ" type="button" onClick={() => setSelectedCase(caseItem)}><Eye size={14} /></button>{isAdmin && <button aria-label={`Gửi nhắc nhở ${caseItem.caseCode}`} className="cases-action-button alerts-remind-button" title="Gửi nhắc nhở" type="button" onClick={() => setReminderCase(caseItem)}><Send size={14} /></button>}</div></td>
                   </tr>
                 );
               })}
-              {!filteredCases.length && <tr><td className="cases-table__empty" colSpan="10">Không tìm thấy cảnh báo phù hợp.</td></tr>}
+              {!filteredCases.length && <tr><td className="cases-table__empty" colSpan="11">Không tìm thấy cảnh báo phù hợp.</td></tr>}
             </tbody>
           </table>
         </div>

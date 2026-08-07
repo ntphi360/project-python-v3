@@ -101,7 +101,7 @@
 .cases-table-card__header span { color: #8a97aa; font-size: 10px; }
 .cases-table-wrap { width: 100%; max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
 
-.cases-table { width: 100%; min-width: 1390px; border-collapse: collapse; color: #52627a; font-size: 10.5px; text-align: left; }
+.cases-table { width: 100%; min-width: 1510px; border-collapse: collapse; color: #52627a; font-size: 10.5px; text-align: left; }
 .cases-table th { padding: 8px 12px; color: #7a889c; background: #fafbfd; border-bottom: 1px solid #e9eef5; font-size: 9px; font-weight: 700; letter-spacing: .025em; text-transform: uppercase; white-space: nowrap; }
 .cases-table td { max-width: 210px; padding: 9px 12px; border-bottom: 1px solid #edf1f6; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cases-table tbody tr:hover { background: #f8fbff; }
@@ -139,6 +139,8 @@
 
 .case-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; margin: 0; }
 .case-details__item { min-width: 0; }
+.case-details__item--appointment { padding: 8px 10px; background: #fff8eb; border: 1px solid #f7dfb7; border-radius: 7px; }
+.case-details__item--appointment dd { color: #b85d10; font-weight: 700; }
 .case-details__item--wide { grid-column: 1 / -1; }
 .case-details dt { margin-bottom: 4px; color: #8a97aa; font-size: 9px; font-weight: 700; text-transform: uppercase; }
 .case-details dd { margin: 0; color: #33445f; font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }

@@ -337,6 +337,11 @@
   background: #fff2df;
 }
 
+.status-badge--today {
+  color: #654fba;
+  background: #f0edff;
+}
+
 .status-badge--overdue {
   color: #df303b;
   background: #ffedef;

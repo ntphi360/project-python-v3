@@ -25,7 +25,7 @@
 
 .alerts-filter-card { grid-template-columns: minmax(210px, 1.35fr) repeat(3, minmax(145px, 1fr)); }
 .alerts-table-card { margin-top: 12px; }
-.alerts-table { min-width: 1580px; }
+.alerts-table { min-width: 1720px; }
 .alerts-countdown { font-variant-numeric: tabular-nums; font-weight: 650; }
 .alerts-countdown--upcoming { color: #c2600d; }
 .alerts-countdown--today { color: #654fba; }
