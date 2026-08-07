@@ -89,7 +89,7 @@ function CaseDetails({ caseItem, histories, onClose }) {
     ["Lĩnh vực", field?.name],
     ["Thủ tục hành chính", procedure?.name],
     ["Phòng ban xử lý", department?.name],
-    ["Người phụ trách", user?.fullName],
+    ["Người xử lý", user?.fullName],
     ["Ngày tiếp nhận", formatDate(caseItem.receivedDate)],
     ["Hạn xử lý", formatDate(caseItem.dueDate)],
     ["Ngày hoàn thành", formatDate(caseItem.completedDate)],
@@ -190,7 +190,7 @@ function CaseForm({ existingCases, initialCase, onClose, onSave }) {
       return;
     }
     if (procedure?.fieldId !== field?.id || field?.departmentId !== form.departmentId || user?.departmentId !== form.departmentId) {
-      setError("Thông tin lĩnh vực, thủ tục, phòng ban hoặc người phụ trách không hợp lệ.");
+      setError("Thông tin lĩnh vực, thủ tục, phòng ban hoặc người xử lý không hợp lệ.");
       return;
     }
 
@@ -244,9 +244,9 @@ function CaseForm({ existingCases, initialCase, onClose, onSave }) {
             </select>
           </label>
           <label>
-            <span>Người phụ trách <em>*</em></span>
+            <span>Người xử lý <em>*</em></span>
             <select disabled={!form.departmentId} required value={form.assignedUserId} onChange={(event) => updateForm("assignedUserId", event.target.value)}>
-              <option value="">Chọn người phụ trách</option>
+              <option value="">Chọn người xử lý</option>
               {availableUsers.map((item) => <option key={item.id} value={item.id}>{item.fullName}</option>)}
             </select>
           </label>
@@ -448,9 +448,9 @@ function CasesPage() {
           </select>
         </label>
         <label>
-          <span>Người phụ trách</span>
+          <span>Người xử lý</span>
           <select value={draftFilters.assignedUserId} onChange={(event) => changeDraftFilter("assignedUserId", event.target.value)}>
-            <option value="">Tất cả người phụ trách</option>
+            <option value="">Tất cả người xử lý</option>
             {filteredUsers.map((item) => <option key={item.id} value={item.id}>{item.fullName}</option>)}
           </select>
         </label>
@@ -476,7 +476,7 @@ function CasesPage() {
           <table className="cases-table">
             <thead>
               <tr>
-                <th>Mã hồ sơ</th><th>Tên hồ sơ</th><th>Lĩnh vực</th><th>Thủ tục hành chính</th><th>Phòng ban</th><th>Người phụ trách</th><th>Hạn xử lý</th><th>Trạng thái</th><th>Thao tác</th>
+                <th>Mã hồ sơ</th><th>Tên hồ sơ</th><th>Lĩnh vực</th><th>Thủ tục hành chính</th><th>Phòng ban</th><th>Người xử lý</th><th>Hạn xử lý</th><th>Trạng thái</th><th>Thao tác</th>
               </tr>
             </thead>
             <tbody>

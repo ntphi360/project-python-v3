@@ -424,7 +424,7 @@ function DashboardPage() {
                 <th scope="col">Tên hồ sơ</th>
                 <th scope="col">Lĩnh vực</th>
                 <th scope="col">Hạn xử lý</th>
-                <th scope="col">Người phụ trách</th>
+                <th scope="col">Người xử lý</th>
                 <th scope="col">Trạng thái</th>
               </tr>
             </thead>
