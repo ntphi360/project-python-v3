@@ -6,8 +6,10 @@ from flask import Flask
 from flask_cors import CORS
 
 from app.extensions import db
+from app.extensions import migrate
 from app.routes.health import health_bp
 from app.routes.cases import cases_bp
+
 
 
 def create_app():
@@ -17,6 +19,7 @@ def create_app():
 
     app.json.ensure_ascii = False
 
+    # connect database
     connection_string = (
         f"DRIVER={{{os.getenv('DB_DRIVER')}}};"
         f"SERVER={os.getenv('DB_SERVER')};"
@@ -35,6 +38,8 @@ def create_app():
 
     db.init_app(app)
 
+    migrate.init_app(app, db)  # Migrate schema database
+
     CORS(app)
 
     app.register_blueprint(
@@ -44,7 +49,7 @@ def create_app():
 
     app.register_blueprint(
         cases_bp,
-        url_prefix="/api/v1"
+        url_prefix="/api/v1" 
     )
 
     return app
