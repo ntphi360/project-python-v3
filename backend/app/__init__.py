@@ -4,6 +4,7 @@ from urllib.parse import quote_plus
 from dotenv import load_dotenv
 from flask import Flask
 from flask_cors import CORS
+from flask_migrate import upgrade
 
 from app.extensions import db
 from app.extensions import migrate
@@ -36,9 +37,11 @@ def create_app():
 
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-    db.init_app(app)
 
+    db.init_app(app)
     migrate.init_app(app, db)  # Migrate schema database
+    with app.app_context(): # 
+        upgrade()
 
     CORS(app)
 
@@ -49,7 +52,7 @@ def create_app():
 
     app.register_blueprint(
         cases_bp,
-        url_prefix="/api/v1" 
+        url_prefix="/api/v1"
     )
 
     return app
