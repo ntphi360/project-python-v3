@@ -27,7 +27,7 @@ class Case(db.Model):
     # thông tin chủ hồ sơ
     applicant_name = db.Column(
         "ApplicantName",
-        db.String(255)
+        db.Unicode(255)
     )
 
     applicant_phone = db.Column(
@@ -37,7 +37,7 @@ class Case(db.Model):
 
     agency_name = db.Column(
         "AgencyName",
-        db.String(255)
+        db.Unicode(255)
     )
 
     # thời gian xử lý
@@ -64,12 +64,12 @@ class Case(db.Model):
     # trạng thái
     status = db.Column(
         "Status",
-        db.String(50)
+        db.Unicode(50)
     )
 
     priority = db.Column(
         "Priority",
-        db.String(50)
+        db.Unicode(50)
     )
 
     current_assignee_id = db.Column(
@@ -80,12 +80,12 @@ class Case(db.Model):
 
     current_step_name = db.Column(
         "CurrentStepName",
-        db.String(255)
+        db.Unicode(255)
     )
 
     source_type = db.Column(
         "SourceType",
-        db.String(50)
+        db.Unicode(50)
     )
 
     external_updated_at = db.Column(

@@ -5,8 +5,8 @@ class User(db.Model):
     __tablename__ = "Users"
 
     id = db.Column("Id", db.Integer, primary_key=True)
-    username = db.Column("Username", db.String(100))
-    full_name = db.Column("FullName", db.String(255))
+    username = db.Column("Username", db.Unicode(100))
+    full_name = db.Column("FullName", db.Unicode(255))
     email = db.Column("Email", db.String(255))
     phone_number = db.Column("PhoneNumber", db.String(50))
 

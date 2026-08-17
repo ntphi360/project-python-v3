@@ -17,7 +17,7 @@ class ProcedureField(db.Model):
 
     name = db.Column(
         "Name",
-        db.String(255),
+        db.Unicode(255),
         nullable=False
     )
 

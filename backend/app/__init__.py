@@ -41,7 +41,7 @@ def create_app():
 
     db.init_app(app)
     migrate.init_app(app, db)  # Migrate schema database
-    with app.app_context(): #
+    with app.app_context():
         upgrade()
 
     CORS(app)

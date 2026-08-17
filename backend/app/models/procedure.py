@@ -6,7 +6,7 @@ class Procedure(db.Model):
 
     id = db.Column("Id", db.Integer, primary_key=True)
     code = db.Column("Code", db.String(50))
-    name = db.Column("Name", db.String(255), nullable=False)
+    name = db.Column("Name", db.Unicode(255), nullable=False)
 
     procedure_field_id = db.Column(
         "ProcedureFieldId",
