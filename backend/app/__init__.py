@@ -10,6 +10,7 @@ from app.extensions import db
 from app.extensions import migrate
 from app.routes.health import health_bp
 from app.routes.cases import cases_bp
+from app.routes.imports import imports_bp
 
 
 
@@ -45,6 +46,7 @@ def create_app():
 
     CORS(app)
 
+    # register routes
     app.register_blueprint(
         health_bp,
         url_prefix="/api/v1"
@@ -52,6 +54,11 @@ def create_app():
 
     app.register_blueprint(
         cases_bp,
+        url_prefix="/api/v1"
+    )
+
+    app.register_blueprint(
+        imports_bp,
         url_prefix="/api/v1"
     )
 
