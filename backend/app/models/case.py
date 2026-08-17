@@ -7,7 +7,9 @@ class Case(db.Model):
 
     external_case_code = db.Column(
         "ExternalCaseCode",
-        db.String(100)
+        db.String(100),
+        unique=True,
+        nullable=False
     )
 
     procedure_id = db.Column(
@@ -22,12 +24,53 @@ class Case(db.Model):
         db.ForeignKey("Departments.Id")
     )
 
-    received_at = db.Column("ReceivedAt", db.DateTime)
-    due_at = db.Column("DueAt", db.DateTime)
-    completed_at = db.Column("CompletedAt", db.DateTime)
+    # thông tin chủ hồ sơ
+    applicant_name = db.Column(
+        "ApplicantName",
+        db.String(255)
+    )
 
-    status = db.Column("Status", db.String(50))
-    priority = db.Column("Priority", db.String(50))
+    applicant_phone = db.Column(
+        "ApplicantPhone",
+        db.String(50)
+    )
+
+    agency_name = db.Column(
+        "AgencyName",
+        db.String(255)
+    )
+
+    # thời gian xử lý
+    received_at = db.Column(
+        "ReceivedAt",
+        db.DateTime
+    )
+
+    appointment_date = db.Column(
+        "AppointmentDate",
+        db.DateTime
+    )
+
+    due_at = db.Column(
+        "DueAt",
+        db.DateTime
+    )
+
+    completed_at = db.Column(
+        "CompletedAt",
+        db.DateTime
+    )
+
+    # trạng thái
+    status = db.Column(
+        "Status",
+        db.String(50)
+    )
+
+    priority = db.Column(
+        "Priority",
+        db.String(50)
+    )
 
     current_assignee_id = db.Column(
         "CurrentAssigneeId",
@@ -50,14 +93,17 @@ class Case(db.Model):
         db.DateTime
     )
 
-    created_at = db.Column("CreatedAt", db.DateTime)
-    updated_at = db.Column("UpdatedAt", db.DateTime)
-
-    applicant_name = db.Column(
-        "ApplicantName",
-        db.String(255)
+    created_at = db.Column(
+        "CreatedAt",
+        db.DateTime
     )
 
-    procedure = db.relationship("Procedure")
+    updated_at = db.Column(
+        "UpdatedAt",
+        db.DateTime
+    )
+
+    # relationships
+    procedure = db.relationship("Procedure" )
     department = db.relationship("Department")
     current_assignee = db.relationship("User")

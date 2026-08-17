@@ -1,8 +1,8 @@
-"""create initial tables
+"""initial database
 
-Revision ID: 30b57cd98f69
+Revision ID: 792048c467d9
 Revises: 
-Create Date: 2026-08-11 22:08:57.028349
+Create Date: 2026-08-17 16:59:34.192358
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '30b57cd98f69'
+revision = '792048c467d9'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -27,15 +27,24 @@ def upgrade():
     sa.Column('CreatedAt', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('Id')
     )
+    op.create_table('ProcedureFields',
+    sa.Column('Id', sa.Integer(), nullable=False),
+    sa.Column('Code', sa.String(length=50), nullable=True),
+    sa.Column('Name', sa.String(length=255), nullable=False),
+    sa.Column('IsActive', sa.Boolean(), nullable=True),
+    sa.Column('CreatedAt', sa.DateTime(), nullable=True),
+    sa.PrimaryKeyConstraint('Id')
+    )
     op.create_table('Procedures',
     sa.Column('Id', sa.Integer(), nullable=False),
     sa.Column('Code', sa.String(length=50), nullable=True),
-    sa.Column('Name', sa.String(length=255), nullable=True),
+    sa.Column('Name', sa.String(length=255), nullable=False),
     sa.Column('ProcedureFieldId', sa.Integer(), nullable=True),
     sa.Column('DefaultProcessingHours', sa.Integer(), nullable=True),
     sa.Column('IsActive', sa.Boolean(), nullable=True),
     sa.Column('CreatedAt', sa.DateTime(), nullable=True),
     sa.Column('UpdatedAt', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['ProcedureFieldId'], ['ProcedureFields.Id'], ),
     sa.PrimaryKeyConstraint('Id')
     )
     op.create_table('Users',
@@ -52,10 +61,14 @@ def upgrade():
     )
     op.create_table('Cases',
     sa.Column('Id', sa.Integer(), nullable=False),
-    sa.Column('ExternalCaseCode', sa.String(length=100), nullable=True),
+    sa.Column('ExternalCaseCode', sa.String(length=100), nullable=False),
     sa.Column('ProcedureId', sa.Integer(), nullable=True),
     sa.Column('DepartmentId', sa.Integer(), nullable=True),
+    sa.Column('ApplicantName', sa.String(length=255), nullable=True),
+    sa.Column('ApplicantPhone', sa.String(length=50), nullable=True),
+    sa.Column('AgencyName', sa.String(length=255), nullable=True),
     sa.Column('ReceivedAt', sa.DateTime(), nullable=True),
+    sa.Column('AppointmentDate', sa.DateTime(), nullable=True),
     sa.Column('DueAt', sa.DateTime(), nullable=True),
     sa.Column('CompletedAt', sa.DateTime(), nullable=True),
     sa.Column('Status', sa.String(length=50), nullable=True),
@@ -66,11 +79,11 @@ def upgrade():
     sa.Column('ExternalUpdatedAt', sa.DateTime(), nullable=True),
     sa.Column('CreatedAt', sa.DateTime(), nullable=True),
     sa.Column('UpdatedAt', sa.DateTime(), nullable=True),
-    sa.Column('ApplicantName', sa.String(length=255), nullable=True),
     sa.ForeignKeyConstraint(['CurrentAssigneeId'], ['Users.Id'], ),
     sa.ForeignKeyConstraint(['DepartmentId'], ['Departments.Id'], ),
     sa.ForeignKeyConstraint(['ProcedureId'], ['Procedures.Id'], ),
-    sa.PrimaryKeyConstraint('Id')
+    sa.PrimaryKeyConstraint('Id'),
+    sa.UniqueConstraint('ExternalCaseCode')
     )
     # ### end Alembic commands ###
 
@@ -80,5 +93,6 @@ def downgrade():
     op.drop_table('Cases')
     op.drop_table('Users')
     op.drop_table('Procedures')
+    op.drop_table('ProcedureFields')
     op.drop_table('Departments')
     # ### end Alembic commands ###
