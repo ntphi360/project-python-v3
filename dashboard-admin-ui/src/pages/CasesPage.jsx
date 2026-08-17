@@ -1,4 +1,9 @@
-import { useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
 import {
   ChevronLeft,
   ChevronRight,
@@ -6,6 +11,8 @@ import {
   RotateCcw,
   Search,
 } from "lucide-react";
+
+import { getCases } from "../services/caseService";
 
 import "./CasesPage.css";
 
@@ -25,7 +32,9 @@ const emptyFilters = {
 };
 
 function formatDate(value) {
-  if (!value) return "—";
+  if (!value) {
+    return "—";
+  }
 
   const [year, month, day] = value
     .slice(0, 10)
@@ -35,7 +44,9 @@ function formatDate(value) {
 }
 
 function formatDateTime(value) {
-  if (!value) return "—";
+  if (!value) {
+    return "—";
+  }
 
   const [date, time = ""] = value.split("T");
 
@@ -51,6 +62,7 @@ function StatusBadge({ status }) {
     "Sắp hạn": "near-due",
     "Quá hạn": "overdue",
     "Hoàn thành": "completed",
+    "Đã hoàn thành": "completed",
   };
 
   return (
@@ -59,14 +71,15 @@ function StatusBadge({ status }) {
         statusKeys[status] ?? "default"
       }`}
     >
-      {status}
+      {status || "—"}
     </span>
   );
 }
 
 function CasesPage() {
-  // bước sau lấy dữ liệu từ api
-  const [caseList] = useState([]);
+  const [caseList, setCaseList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const [draftFilters, setDraftFilters] =
     useState(emptyFilters);
@@ -77,6 +90,31 @@ function CasesPage() {
   const [currentPage, setCurrentPage] =
     useState(1);
 
+  // lấy danh sách hồ sơ
+  useEffect(() => {
+    const fetchCases = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const data = await getCases();
+
+        setCaseList(data ?? []);
+      } catch (error) {
+        console.error(error);
+
+        setError(
+          "Không thể tải danh sách hồ sơ."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCases();
+  }, []);
+
+  // lọc dữ liệu
   const filteredCases = useMemo(() => {
     return caseList.filter((caseItem) => {
       const search = appliedFilters.search
@@ -91,22 +129,36 @@ function CasesPage() {
         caseItem.applicantName ?? ""
       ).toLocaleLowerCase("vi");
 
+      const procedureName = String(
+        caseItem.procedureName ?? ""
+      ).toLocaleLowerCase("vi");
+
+      const assigneeName = String(
+        caseItem.assigneeName ?? ""
+      ).toLocaleLowerCase("vi");
+
       const matchesSearch =
         !search ||
         caseCode.includes(search) ||
-        applicantName.includes(search);
+        applicantName.includes(search) ||
+        procedureName.includes(search) ||
+        assigneeName.includes(search);
 
       const matchesStatus =
         !appliedFilters.status ||
-        caseItem.status === appliedFilters.status;
+        caseItem.status ===
+          appliedFilters.status;
 
       return matchesSearch && matchesStatus;
     });
   }, [appliedFilters, caseList]);
 
+  // phân trang
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredCases.length / PAGE_SIZE)
+    Math.ceil(
+      filteredCases.length / PAGE_SIZE
+    )
   );
 
   const pageCases = filteredCases.slice(
@@ -141,8 +193,8 @@ function CasesPage() {
           <h1>Quản lý hồ sơ</h1>
 
           <p>
-            Theo dõi, tra cứu và quản lý hồ sơ
-            hành chính.
+            Theo dõi, tra cứu và quản lý
+            hồ sơ hành chính.
           </p>
         </div>
       </div>
@@ -161,7 +213,7 @@ function CasesPage() {
             />
 
             <input
-              placeholder="Mã hoặc chủ hồ sơ"
+              placeholder="Mã hồ sơ, chủ hồ sơ, thủ tục..."
               value={draftFilters.search}
               onChange={(event) =>
                 changeDraftFilter(
@@ -229,115 +281,153 @@ function CasesPage() {
           </span>
         </div>
 
-        <div className="cases-table-wrap">
-          <table className="cases-table">
-            <thead>
-              <tr>
-                <th>Mã hồ sơ</th>
-                <th>Chủ hồ sơ</th>
-                <th>Thủ tục hành chính</th>
-                <th>Phòng ban</th>
-                <th>Người xử lý</th>
-                <th>Ngày tiếp nhận</th>
-                <th>Ngày hẹn trả</th>
-                <th>Trạng thái</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {pageCases.map((caseItem) => (
-                <tr key={caseItem.id}>
-                  <td className="cases-table__code">
-                    {caseItem.caseCode ?? "—"}
-                  </td>
-
-                  <td className="cases-table__name">
-                    {caseItem.applicantName ?? "—"}
-                  </td>
-
-                  <td>
-                    {caseItem.procedureName ?? "—"}
-                  </td>
-
-                  <td>
-                    {caseItem.departmentName ?? "—"}
-                  </td>
-
-                  <td>
-                    {caseItem.assigneeName ?? "—"}
-                  </td>
-
-                  <td>
-                    {formatDate(
-                      caseItem.receivedAt
-                    )}
-                  </td>
-
-                  <td>
-                    {formatDateTime(
-                      caseItem.appointmentDate
-                    )}
-                  </td>
-
-                  <td>
-                    <StatusBadge
-                      status={caseItem.status}
-                    />
-                  </td>
-                </tr>
-              ))}
-
-              {!pageCases.length && (
-                <tr>
-                  <td
-                    className="cases-table__empty"
-                    colSpan="8"
-                  >
-                    Chưa có dữ liệu hồ sơ.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="cases-pagination">
-          <span>
-            Trang {currentPage} / {totalPages}
-          </span>
-
-          <div>
-            <button
-              aria-label="Trang trước"
-              disabled={currentPage === 1}
-              type="button"
-              onClick={() =>
-                setCurrentPage(
-                  (page) => page - 1
-                )
-              }
-            >
-              <ChevronLeft size={16} />
-              Previous
-            </button>
-
-            <button
-              aria-label="Trang sau"
-              disabled={
-                currentPage === totalPages
-              }
-              type="button"
-              onClick={() =>
-                setCurrentPage(
-                  (page) => page + 1
-                )
-              }
-            >
-              Next
-              <ChevronRight size={16} />
-            </button>
+        {loading && (
+          <div className="cases-table__empty">
+            Đang tải dữ liệu...
           </div>
-        </div>
+        )}
+
+        {!loading && error && (
+          <div className="cases-table__empty">
+            {error}
+          </div>
+        )}
+
+        {!loading && !error && (
+          <>
+            <div className="cases-table-wrap">
+              <table className="cases-table">
+                <thead>
+                  <tr>
+                    <th>Mã hồ sơ</th>
+                    <th>Chủ hồ sơ</th>
+                    <th>
+                      Thủ tục hành chính
+                    </th>
+                    <th>Phòng ban</th>
+                    <th>Người xử lý</th>
+                    <th>Ngày tiếp nhận</th>
+                    <th>Ngày hẹn trả</th>
+                    <th>Hạn xử lý</th>
+                    <th>Trạng thái</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {pageCases.map(
+                    (caseItem) => (
+                      <tr key={caseItem.id}>
+                        <td className="cases-table__code">
+                          {caseItem.caseCode ??
+                            "—"}
+                        </td>
+
+                        <td className="cases-table__name">
+                          {caseItem.applicantName ??
+                            "—"}
+                        </td>
+
+                        <td>
+                          {caseItem.procedureName ??
+                            "—"}
+                        </td>
+
+                        <td>
+                          {caseItem.departmentName ??
+                            "—"}
+                        </td>
+
+                        <td>
+                          {caseItem.assigneeName ??
+                            "—"}
+                        </td>
+
+                        <td>
+                          {formatDate(
+                            caseItem.receivedAt
+                          )}
+                        </td>
+
+                        <td>
+                          {formatDateTime(
+                            caseItem.appointmentDate
+                          )}
+                        </td>
+
+                        <td>
+                          {formatDateTime(
+                            caseItem.dueAt
+                          )}
+                        </td>
+
+                        <td>
+                          <StatusBadge
+                            status={
+                              caseItem.status
+                            }
+                          />
+                        </td>
+                      </tr>
+                    )
+                  )}
+
+                  {!pageCases.length && (
+                    <tr>
+                      <td
+                        className="cases-table__empty"
+                        colSpan="9"
+                      >
+                        Chưa có dữ liệu hồ sơ.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="cases-pagination">
+              <span>
+                Trang {currentPage} /{" "}
+                {totalPages}
+              </span>
+
+              <div>
+                <button
+                  aria-label="Trang trước"
+                  disabled={
+                    currentPage === 1
+                  }
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage(
+                      (page) => page - 1
+                    )
+                  }
+                >
+                  <ChevronLeft size={16} />
+                  Previous
+                </button>
+
+                <button
+                  aria-label="Trang sau"
+                  disabled={
+                    currentPage ===
+                    totalPages
+                  }
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage(
+                      (page) => page + 1
+                    )
+                  }
+                >
+                  Next
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </article>
     </section>
   );
