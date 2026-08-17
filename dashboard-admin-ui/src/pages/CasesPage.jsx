@@ -16,7 +16,7 @@ import { getCases } from "../services/caseService";
 
 import "./CasesPage.css";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 15;
 
 const caseStatuses = [
   "Mới tiếp nhận",
@@ -24,12 +24,14 @@ const caseStatuses = [
   "Sắp hạn",
   "Quá hạn",
   "Hoàn thành",
+  "Đã hoàn thành",
 ];
 
 const emptyFilters = {
   search: "",
   status: "",
 };
+
 
 function formatDate(value) {
   if (!value) {
@@ -43,6 +45,7 @@ function formatDate(value) {
   return `${day}/${month}/${year}`;
 }
 
+
 function formatDateTime(value) {
   if (!value) {
     return "—";
@@ -54,6 +57,7 @@ function formatDateTime(value) {
     time ? ` ${time.slice(0, 5)}` : ""
   }`;
 }
+
 
 function StatusBadge({ status }) {
   const statusKeys = {
@@ -76,8 +80,19 @@ function StatusBadge({ status }) {
   );
 }
 
+
 function CasesPage() {
   const [caseList, setCaseList] = useState([]);
+
+  const [pagination, setPagination] = useState({
+    page: 1,
+    perPage: PAGE_SIZE,
+    total: 0,
+    totalPages: 1,
+    hasNext: false,
+    hasPrev: false,
+  });
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -90,16 +105,31 @@ function CasesPage() {
   const [currentPage, setCurrentPage] =
     useState(1);
 
-  // lấy danh sách hồ sơ
+
+  // Lấy danh sách hồ sơ theo trang từ backend
   useEffect(() => {
     const fetchCases = async () => {
       try {
         setLoading(true);
         setError("");
 
-        const data = await getCases();
+        const data = await getCases(
+          currentPage,
+          PAGE_SIZE
+        );
 
-        setCaseList(data ?? []);
+        setCaseList(data?.items ?? []);
+
+        setPagination(
+          data?.pagination ?? {
+            page: currentPage,
+            perPage: PAGE_SIZE,
+            total: 0,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false,
+          }
+        );
       } catch (error) {
         console.error(error);
 
@@ -112,9 +142,10 @@ function CasesPage() {
     };
 
     fetchCases();
-  }, []);
+  }, [currentPage]);
 
-  // lọc dữ liệu
+
+  // Tạm thời lọc dữ liệu trên trang hiện tại
   const filteredCases = useMemo(() => {
     return caseList.filter((caseItem) => {
       const search = appliedFilters.search
@@ -153,18 +184,6 @@ function CasesPage() {
     });
   }, [appliedFilters, caseList]);
 
-  // phân trang
-  const totalPages = Math.max(
-    1,
-    Math.ceil(
-      filteredCases.length / PAGE_SIZE
-    )
-  );
-
-  const pageCases = filteredCases.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  );
 
   function changeDraftFilter(name, value) {
     setDraftFilters((current) => ({
@@ -173,6 +192,7 @@ function CasesPage() {
     }));
   }
 
+
   function applyFilters(event) {
     event.preventDefault();
 
@@ -180,11 +200,31 @@ function CasesPage() {
     setCurrentPage(1);
   }
 
+
   function resetFilters() {
     setDraftFilters(emptyFilters);
     setAppliedFilters(emptyFilters);
     setCurrentPage(1);
   }
+
+
+  function goToPreviousPage() {
+    if (!pagination.hasPrev) {
+      return;
+    }
+
+    setCurrentPage((page) => page - 1);
+  }
+
+
+  function goToNextPage() {
+    if (!pagination.hasNext) {
+      return;
+    }
+
+    setCurrentPage((page) => page + 1);
+  }
+
 
   return (
     <section className="cases-page">
@@ -198,6 +238,7 @@ function CasesPage() {
           </p>
         </div>
       </div>
+
 
       <form
         className="cases-filter-card"
@@ -224,6 +265,7 @@ function CasesPage() {
             />
           </div>
         </label>
+
 
         <label>
           <span>Trạng thái</span>
@@ -252,6 +294,7 @@ function CasesPage() {
           </select>
         </label>
 
+
         <div className="cases-filter-card__actions">
           <button
             className="cases-button cases-button--primary"
@@ -272,14 +315,16 @@ function CasesPage() {
         </div>
       </form>
 
+
       <article className="cases-table-card">
         <div className="cases-table-card__header">
           <h2>Danh sách hồ sơ</h2>
 
           <span>
-            {filteredCases.length} hồ sơ
+            {pagination.total} hồ sơ
           </span>
         </div>
+
 
         {loading && (
           <div className="cases-table__empty">
@@ -287,11 +332,13 @@ function CasesPage() {
           </div>
         )}
 
+
         {!loading && error && (
           <div className="cases-table__empty">
             {error}
           </div>
         )}
+
 
         {!loading && !error && (
           <>
@@ -300,21 +347,30 @@ function CasesPage() {
                 <thead>
                   <tr>
                     <th>Mã hồ sơ</th>
+
                     <th>Chủ hồ sơ</th>
+
                     <th>
                       Thủ tục hành chính
                     </th>
+
                     <th>Phòng ban</th>
+
                     <th>Người xử lý</th>
+
                     <th>Ngày tiếp nhận</th>
+
                     <th>Ngày hẹn trả</th>
+
                     <th>Hạn xử lý</th>
+
                     <th>Trạng thái</th>
                   </tr>
                 </thead>
 
+
                 <tbody>
-                  {pageCases.map(
+                  {filteredCases.map(
                     (caseItem) => (
                       <tr key={caseItem.id}>
                         <td className="cases-table__code">
@@ -371,7 +427,8 @@ function CasesPage() {
                     )
                   )}
 
-                  {!pageCases.length && (
+
+                  {!filteredCases.length && (
                     <tr>
                       <td
                         className="cases-table__empty"
@@ -385,24 +442,21 @@ function CasesPage() {
               </table>
             </div>
 
+
             <div className="cases-pagination">
               <span>
-                Trang {currentPage} /{" "}
-                {totalPages}
+                Trang {pagination.page} /{" "}
+                {pagination.totalPages}
               </span>
 
               <div>
                 <button
                   aria-label="Trang trước"
                   disabled={
-                    currentPage === 1
+                    !pagination.hasPrev
                   }
                   type="button"
-                  onClick={() =>
-                    setCurrentPage(
-                      (page) => page - 1
-                    )
-                  }
+                  onClick={goToPreviousPage}
                 >
                   <ChevronLeft size={16} />
                   Previous
@@ -411,15 +465,10 @@ function CasesPage() {
                 <button
                   aria-label="Trang sau"
                   disabled={
-                    currentPage ===
-                    totalPages
+                    !pagination.hasNext
                   }
                   type="button"
-                  onClick={() =>
-                    setCurrentPage(
-                      (page) => page + 1
-                    )
-                  }
+                  onClick={goToNextPage}
                 >
                   Next
                   <ChevronRight size={16} />
@@ -432,5 +481,6 @@ function CasesPage() {
     </section>
   );
 }
+
 
 export default CasesPage;
