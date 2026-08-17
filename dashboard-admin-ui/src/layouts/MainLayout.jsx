@@ -26,7 +26,7 @@ const menuItems = [
   // { label: "Thông báo", path: "/notifications", icon: Bell },
   { label: "Thống kê & Báo cáo", path: "/reports", icon: ChartNoAxesCombined },
   { label: "Import dữ liệu", path: "/import", icon: Import },
-  { label: "Người dùng", path: "/users", icon: Users },
+  // { label: "Người dùng", path: "/users", icon: Users },
   // { label: "Phòng ban", path: "/departments", icon: Building2 },
   // { label: "Thủ tục", path: "/procedures", icon: Workflow },
   // { label: "Cài đặt", path: "/settings", icon: Settings },

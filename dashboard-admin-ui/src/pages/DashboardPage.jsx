@@ -20,140 +20,54 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+
 import { Link } from "react-router-dom";
 
-import {
-  cases as mockCases,
-  getCaseRelations,
-} from "../data/caseData";
 import "./DashboardPage.css";
 
 const kpiCards = [
   {
     title: "Tổng hồ sơ",
-    value: "1,248",
-    change: "12% so với tháng trước",
+    value: 0,
+    change: "Chưa có dữ liệu",
     trend: "up",
     icon: Files,
     tone: "blue",
   },
   {
     title: "Hồ sơ sắp hạn",
-    value: "86",
-    change: "9% so với tháng trước",
+    value: 0,
+    change: "Chưa có dữ liệu",
     trend: "down",
     icon: Clock3,
     tone: "orange",
   },
   {
     title: "Hồ sơ quá hạn",
-    value: "24",
-    change: "6% so với tháng trước",
+    value: 0,
+    change: "Chưa có dữ liệu",
     trend: "down",
     icon: TriangleAlert,
     tone: "red",
   },
   {
     title: "Đã hoàn thành",
-    value: "1,038",
-    change: "18% so với tháng trước",
+    value: 0,
+    change: "Chưa có dữ liệu",
     trend: "up",
     icon: CircleCheckBig,
     tone: "green",
   },
 ];
 
-const statusData = [
-  {
-    name: "Đang xử lý",
-    value: 218,
-    fill: "#2775e8",
-  },
-  {
-    name: "Sắp hạn",
-    value: 86,
-    fill: "#f59e0b",
-  },
-  {
-    name: "Quá hạn",
-    value: 24,
-    fill: "#ef4444",
-  },
-  {
-    name: "Hoàn thành",
-    value: 1038,
-    fill: "#22a667",
-  },
-];
+// dữ liệu sẽ lấy từ api sau
+const statusData = [];
 
-const timelineData = [
-  {
-    period: "T1",
-    received: 142,
-    completed: 112,
-  },
-  {
-    period: "T2",
-    received: 178,
-    completed: 136,
-  },
-  {
-    period: "T3",
-    received: 165,
-    completed: 151,
-  },
-  {
-    period: "T4",
-    received: 226,
-    completed: 184,
-  },
-  {
-    period: "T5",
-    received: 198,
-    completed: 163,
-  },
-  {
-    period: "T6",
-    received: 248,
-    completed: 207,
-  },
-  {
-    period: "T7",
-    received: 271,
-    completed: 234,
-  },
-];
+// dữ liệu sẽ lấy từ api sau
+const timelineData = [];
 
-const dashboardNow = Date.now();
-
-function getAttentionStatus(appointmentReturnDate) {
-  const appointmentDate = new Date(appointmentReturnDate);
-  const currentDate = new Date(dashboardNow);
-
-  if (appointmentDate.getTime() < dashboardNow) return { label: "Quá hạn", key: "overdue", priority: 0 };
-  if (
-    appointmentDate.getFullYear() === currentDate.getFullYear()
-    && appointmentDate.getMonth() === currentDate.getMonth()
-    && appointmentDate.getDate() === currentDate.getDate()
-  ) return { label: "Đến hạn hôm nay", key: "today", priority: 1 };
-  return { label: "Sắp hạn", key: "upcoming", priority: 2 };
-}
-
-const attentionCases = mockCases
-  .filter((caseItem) => caseItem.status !== "Hoàn thành")
-  .map((caseItem) => ({
-    ...caseItem,
-    attention: getAttentionStatus(caseItem.appointmentReturnDate),
-  }))
-  .sort((first, second) => first.attention.priority - second.attention.priority
-    || new Date(first.appointmentReturnDate) - new Date(second.appointmentReturnDate))
-  .slice(0, 5);
-
-function formatCaseDateTime(value) {
-  const [date, time] = value.split("T");
-  const [year, month, day] = date.split("-");
-  return `${day}/${month}/${year} ${time.slice(0, 5)}`;
-}
+// dữ liệu sẽ lấy từ api sau
+const attentionCases = [];
 
 const chartTooltipStyle = {
   border: "1px solid #e4eaf2",
@@ -165,14 +79,30 @@ const chartTooltipStyle = {
 function DonutCenterLabel({ total, viewBox }) {
   const { cx, cy } = viewBox ?? {};
 
-  if (typeof cx !== "number" || typeof cy !== "number") return null;
+  if (
+    typeof cx !== "number" ||
+    typeof cy !== "number"
+  ) {
+    return null;
+  }
 
   return (
     <g className="status-chart__center-label">
-      <text className="status-chart__total" x={cx} y={cy - 6} textAnchor="middle">
-        {total.toLocaleString("en-US")}
+      <text
+        className="status-chart__total"
+        x={cx}
+        y={cy - 6}
+        textAnchor="middle"
+      >
+        {total.toLocaleString("vi-VN")}
       </text>
-      <text className="status-chart__caption" x={cx} y={cy + 12} textAnchor="middle">
+
+      <text
+        className="status-chart__caption"
+        x={cx}
+        y={cy + 12}
+        textAnchor="middle"
+      >
         hồ sơ
       </text>
     </g>
@@ -189,7 +119,11 @@ function DashboardPage() {
     <section className="dashboard-page">
       <div className="dashboard-page__heading">
         <h1>Dashboard</h1>
-        <p>Tổng quan tình hình quản lý hồ sơ trong hệ thống.</p>
+
+        <p>
+          Tổng quan tình hình quản lý hồ sơ
+          trong hệ thống.
+        </p>
       </div>
 
       <div
@@ -206,7 +140,9 @@ function DashboardPage() {
             tone,
           }) => {
             const TrendIcon =
-              trend === "up" ? TrendingUp : TrendingDown;
+              trend === "up"
+                ? TrendingUp
+                : TrendingDown;
 
             return (
               <article
@@ -254,7 +190,10 @@ function DashboardPage() {
         <article className="dashboard-card dashboard-card--status-chart">
           <div className="dashboard-card__header">
             <div>
-              <h2>Thống kê hồ sơ theo trạng thái</h2>
+              <h2>
+                Thống kê hồ sơ theo trạng thái
+              </h2>
+
               <p>Phân bổ hồ sơ hiện tại</p>
             </div>
           </div>
@@ -264,42 +203,51 @@ function DashboardPage() {
             aria-label="Biểu đồ hồ sơ theo trạng thái"
           >
             <div className="status-chart__plot">
-              <ResponsiveContainer
-                width="100%"
-                height="100%"
-              >
-                <PieChart>
-                  <Pie
-                    data={statusData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius="57%"
-                    outerRadius="82%"
-                    paddingAngle={2}
-                    stroke="none"
-                    isAnimationActive={false}
-                  >
-                    <Label
-                      content={(labelProps) => (
-                        <DonutCenterLabel
-                          {...labelProps}
-                          total={totalStatusCases}
-                        />
-                      )}
+              {statusData.length > 0 ? (
+                <ResponsiveContainer
+                  width="100%"
+                  height="100%"
+                >
+                  <PieChart>
+                    <Pie
+                      data={statusData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius="57%"
+                      outerRadius="82%"
+                      paddingAngle={2}
+                      stroke="none"
+                      isAnimationActive={false}
+                    >
+                      <Label
+                        content={(labelProps) => (
+                          <DonutCenterLabel
+                            {...labelProps}
+                            total={
+                              totalStatusCases
+                            }
+                          />
+                        )}
+                      />
+                    </Pie>
+
+                    <Tooltip
+                      contentStyle={
+                        chartTooltipStyle
+                      }
+                      formatter={(value) => [
+                        `${value} hồ sơ`,
+                      ]}
                     />
-                  </Pie>
-
-                  <Tooltip
-                    contentStyle={chartTooltipStyle}
-                    formatter={(value) => [
-                      `${value} hồ sơ`,
-                    ]}
-                  />
-
-                </PieChart>
-              </ResponsiveContainer>
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="dashboard-empty">
+                  Chưa có dữ liệu
+                </div>
+              )}
             </div>
 
             <ul
@@ -309,18 +257,33 @@ function DashboardPage() {
               {statusData.map((item) => (
                 <li
                   key={item.name}
-                  style={{ "--legend-color": item.fill }}
+                  style={{
+                    "--legend-color":
+                      item.fill,
+                  }}
                 >
                   <span
                     className="status-chart__legend-dot"
                     aria-hidden="true"
                   />
+
                   <span className="status-chart__legend-content">
-                    <strong>{item.name}</strong>
+                    <strong>
+                      {item.name}
+                    </strong>
+
                     <small>
-                      {Math.round(
-                        (item.value / totalStatusCases) * 100
-                      )}% · {item.value.toLocaleString("en-US")}
+                      {totalStatusCases > 0
+                        ? Math.round(
+                            (item.value /
+                              totalStatusCases) *
+                              100
+                          )
+                        : 0}
+                      % ·{" "}
+                      {item.value.toLocaleString(
+                        "vi-VN"
+                      )}
                     </small>
                   </span>
                 </li>
@@ -335,7 +298,8 @@ function DashboardPage() {
               <h2>Hồ sơ theo thời gian</h2>
 
               <p>
-                Tình hình tiếp nhận và hoàn thành gần đây
+                Tình hình tiếp nhận và hoàn thành
+                gần đây
               </p>
             </div>
           </div>
@@ -344,84 +308,92 @@ function DashboardPage() {
             className="timeline-chart"
             aria-label="Biểu đồ hồ sơ theo thời gian"
           >
-            <ResponsiveContainer
-              width="100%"
-              height="100%"
-            >
-              <LineChart
-                data={timelineData}
-                margin={{
-                  top: 8,
-                  right: 8,
-                  left: -18,
-                  bottom: 0,
-                }}
+            {timelineData.length > 0 ? (
+              <ResponsiveContainer
+                width="100%"
+                height="100%"
               >
-                <CartesianGrid
-                  stroke="#e9eef5"
-                  strokeDasharray="3 3"
-                  vertical={false}
-                />
-
-                <XAxis
-                  axisLine={false}
-                  dataKey="period"
-                  tick={{
-                    fill: "#7b899d",
-                    fontSize: 11,
+                <LineChart
+                  data={timelineData}
+                  margin={{
+                    top: 8,
+                    right: 8,
+                    left: -18,
+                    bottom: 0,
                   }}
-                  tickLine={false}
-                  tickMargin={10}
-                />
+                >
+                  <CartesianGrid
+                    stroke="#e9eef5"
+                    strokeDasharray="3 3"
+                    vertical={false}
+                  />
 
-                <YAxis
-                  axisLine={false}
-                  tick={{
-                    fill: "#7b899d",
-                    fontSize: 11,
-                  }}
-                  tickLine={false}
-                  tickMargin={8}
-                />
+                  <XAxis
+                    axisLine={false}
+                    dataKey="period"
+                    tick={{
+                      fill: "#7b899d",
+                      fontSize: 11,
+                    }}
+                    tickLine={false}
+                    tickMargin={10}
+                  />
 
-                <Tooltip
-                  contentStyle={chartTooltipStyle}
-                />
+                  <YAxis
+                    axisLine={false}
+                    tick={{
+                      fill: "#7b899d",
+                      fontSize: 11,
+                    }}
+                    tickLine={false}
+                    tickMargin={8}
+                  />
 
-                <Legend
-                  align="center"
-                  iconSize={9}
-                  iconType="circle"
-                  verticalAlign="bottom"
-                  wrapperStyle={{
-                    paddingTop: 8,
-                    fontSize: 10,
-                  }}
-                />
+                  <Tooltip
+                    contentStyle={
+                      chartTooltipStyle
+                    }
+                  />
 
-                <Line
-                  activeDot={{ r: 5 }}
-                  dataKey="received"
-                  dot={{ r: 3 }}
-                  name="Hồ sơ tiếp nhận"
-                  stroke="#2775e8"
-                  strokeWidth={2.2}
-                  type="monotone"
-                  isAnimationActive={false}
-                />
+                  <Legend
+                    align="center"
+                    iconSize={9}
+                    iconType="circle"
+                    verticalAlign="bottom"
+                    wrapperStyle={{
+                      paddingTop: 8,
+                      fontSize: 10,
+                    }}
+                  />
 
-                <Line
-                  activeDot={{ r: 5 }}
-                  dataKey="completed"
-                  dot={{ r: 3 }}
-                  name="Hồ sơ hoàn thành"
-                  stroke="#22a667"
-                  strokeWidth={2.2}
-                  type="monotone"
-                  isAnimationActive={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+                  <Line
+                    activeDot={{ r: 5 }}
+                    dataKey="received"
+                    dot={{ r: 3 }}
+                    name="Hồ sơ tiếp nhận"
+                    stroke="#2775e8"
+                    strokeWidth={2.2}
+                    type="monotone"
+                    isAnimationActive={false}
+                  />
+
+                  <Line
+                    activeDot={{ r: 5 }}
+                    dataKey="completed"
+                    dot={{ r: 3 }}
+                    name="Hồ sơ hoàn thành"
+                    stroke="#22a667"
+                    strokeWidth={2.2}
+                    type="monotone"
+                    isAnimationActive={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="dashboard-empty">
+                Chưa có dữ liệu
+              </div>
+            )}
           </div>
         </article>
       </div>
@@ -432,7 +404,10 @@ function DashboardPage() {
             <h2>Hồ sơ cần chú ý</h2>
           </div>
 
-          <Link className="records-card__link" to="/cases">
+          <Link
+            className="records-card__link"
+            to="/cases"
+          >
             Xem tất cả
           </Link>
         </div>
@@ -441,34 +416,79 @@ function DashboardPage() {
           <table className="records-table">
             <thead>
               <tr>
-                <th scope="col">Mã hồ sơ</th>
-                <th scope="col">Tên hồ sơ</th>
-                <th scope="col">Lĩnh vực</th>
-                <th scope="col">Ngày hẹn trả</th>
-                <th scope="col">Người xử lý</th>
-                <th scope="col">Trạng thái</th>
+                <th scope="col">
+                  Mã hồ sơ
+                </th>
+
+                <th scope="col">
+                  Chủ hồ sơ
+                </th>
+
+                <th scope="col">
+                  Thủ tục
+                </th>
+
+                <th scope="col">
+                  Ngày hẹn trả
+                </th>
+
+                <th scope="col">
+                  Người xử lý
+                </th>
+
+                <th scope="col">
+                  Trạng thái
+                </th>
               </tr>
             </thead>
 
             <tbody>
-              {attentionCases.map((caseItem) => {
-                const { field, user } = getCaseRelations(caseItem);
-
-                return (
+              {attentionCases.map(
+                (caseItem) => (
                   <tr key={caseItem.id}>
-                    <td className="records-table__code">{caseItem.caseCode}</td>
-                    <td>{caseItem.caseName}</td>
-                    <td>{field?.name ?? "—"}</td>
-                    <td>{formatCaseDateTime(caseItem.appointmentReturnDate)}</td>
-                    <td>{user?.fullName ?? "—"}</td>
+                    <td className="records-table__code">
+                      {caseItem.caseCode ??
+                        "—"}
+                    </td>
+
                     <td>
-                      <span className={`status-badge status-badge--${caseItem.attention.key}`}>
-                        {caseItem.attention.label}
-                      </span>
+                      {caseItem.applicantName ??
+                        "—"}
+                    </td>
+
+                    <td>
+                      {caseItem.procedureName ??
+                        "—"}
+                    </td>
+
+                    <td>
+                      {caseItem.appointmentDate ??
+                        "—"}
+                    </td>
+
+                    <td>
+                      {caseItem.assigneeName ??
+                        "—"}
+                    </td>
+
+                    <td>
+                      {caseItem.status ??
+                        "—"}
                     </td>
                   </tr>
-                );
-              })}
+                )
+              )}
+
+              {!attentionCases.length && (
+                <tr>
+                  <td
+                    colSpan="6"
+                    className="records-table__empty"
+                  >
+                    Chưa có dữ liệu hồ sơ.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

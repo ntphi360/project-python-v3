@@ -39,7 +39,7 @@ function ImportPage() {
   const fileInputRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileError, setFileError] = useState("");
-  const [exportFilters, setExportFilters] = useState(initialFilters);
+
 
   function handleFileChange(event) {
     const [file] = event.target.files;
@@ -62,14 +62,12 @@ function ImportPage() {
     setFileError("");
   }
 
-  function updateExportFilter(name, value) {
-    setExportFilters((current) => ({ ...current, [name]: value }));
-  }
+
 
   return (
     <section className="data-transfer-page">
       <div className="data-transfer-page__heading">
-        <h1>Import / Export dữ liệu</h1>
+        <h1>Import dữ liệu</h1>
         <p>Chuẩn bị file dữ liệu và thiết lập điều kiện xuất báo cáo.</p>
       </div>
 
@@ -136,65 +134,6 @@ function ImportPage() {
         </div>
       </article>
 
-      <article className="transfer-card transfer-card--export">
-        <header className="transfer-card__header">
-          <div>
-            <span className="transfer-card__icon transfer-card__icon--green"><Download size={19} /></span>
-            <div>
-              <h2>Export dữ liệu</h2>
-              <p>Thiết lập bộ lọc và định dạng file cần xuất.</p>
-            </div>
-          </div>
-        </header>
-
-        <form className="export-form" onSubmit={(event) => event.preventDefault()}>
-          <label>
-            <span>Từ ngày</span>
-            <input type="date" value={exportFilters.fromDate} onChange={(event) => updateExportFilter("fromDate", event.target.value)} />
-          </label>
-          <label>
-            <span>Đến ngày</span>
-            <input min={exportFilters.fromDate || undefined} type="date" value={exportFilters.toDate} onChange={(event) => updateExportFilter("toDate", event.target.value)} />
-          </label>
-          <label>
-            <span>Lĩnh vực</span>
-            <select disabled value={exportFilters.field} onChange={(event) => updateExportFilter("field", event.target.value)}><option value="">Chưa có dữ liệu</option></select>
-          </label>
-          <label>
-            <span>Thủ tục hành chính</span>
-            <select disabled value={exportFilters.procedure} onChange={(event) => updateExportFilter("procedure", event.target.value)}><option value="">Chưa có dữ liệu</option></select>
-          </label>
-          <label>
-            <span>Phòng ban</span>
-            <select disabled value={exportFilters.department} onChange={(event) => updateExportFilter("department", event.target.value)}><option value="">Chưa có dữ liệu</option></select>
-          </label>
-          <label>
-            <span>Người xử lý</span>
-            <select disabled value={exportFilters.handler} onChange={(event) => updateExportFilter("handler", event.target.value)}><option value="">Chưa có dữ liệu</option></select>
-          </label>
-          <label>
-            <span>Trạng thái</span>
-            <select value={exportFilters.status} onChange={(event) => updateExportFilter("status", event.target.value)}>
-              <option value="">Tất cả trạng thái</option>
-              <option value="Mới tiếp nhận">Mới tiếp nhận</option>
-              <option value="Đang xử lý">Đang xử lý</option>
-              <option value="Sắp hạn">Sắp hạn</option>
-              <option value="Quá hạn">Quá hạn</option>
-              <option value="Hoàn thành">Hoàn thành</option>
-            </select>
-          </label>
-          <fieldset className="export-format">
-            <legend>Định dạng file</legend>
-            <label><input checked={exportFilters.format === "xlsx"} name="export-format" type="radio" value="xlsx" onChange={(event) => updateExportFilter("format", event.target.value)} /> Excel (.xlsx)</label>
-            <label><input checked={exportFilters.format === "csv"} name="export-format" type="radio" value="csv" onChange={(event) => updateExportFilter("format", event.target.value)} /> CSV (.csv)</label>
-          </fieldset>
-          <div className="export-form__actions">
-            <button className="transfer-button transfer-button--secondary" type="button" onClick={() => setExportFilters(initialFilters)}><RotateCcw size={14} /> Đặt lại</button>
-            <button className="transfer-button transfer-button--primary transfer-button--green" disabled type="submit" title="Chưa kết nối API export"><Download size={14} /> Xuất dữ liệu</button>
-          </div>
-        </form>
-        <p className="transfer-message transfer-message--warning">Import và Export đang ở trạng thái chưa kết nối API.</p>
-      </article>
     </section>
   );
 }
