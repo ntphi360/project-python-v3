@@ -8,32 +8,48 @@ cases_bp = Blueprint("cases", __name__)
 
 @cases_bp.get("/cases")
 def get_cases():
-    cases = Case.query.all()
+    cases = Case.query.order_by(
+        Case.id.desc()
+    ).all()
 
     data = []
 
     for case in cases:
         data.append({
             "id": case.id,
-            "externalCaseCode": case.external_case_code,
+            "caseCode": case.external_case_code,
 
-            "procedureId": case.procedure_id,
             "procedureName": (
                 case.procedure.name
                 if case.procedure
                 else None
             ),
 
-            "departmentId": case.department_id,
             "departmentName": (
                 case.department.name
                 if case.department
                 else None
             ),
 
+            "assigneeName": (
+                case.current_assignee.full_name
+                if case.current_assignee
+                else None
+            ),
+
+            "applicantName": case.applicant_name,
+            "applicantPhone": case.applicant_phone,
+            "agencyName": case.agency_name,
+
             "receivedAt": (
                 case.received_at.isoformat()
                 if case.received_at
+                else None
+            ),
+
+            "appointmentDate": (
+                case.appointment_date.isoformat()
+                if case.appointment_date
                 else None
             ),
 
@@ -51,18 +67,8 @@ def get_cases():
 
             "status": case.status,
             "priority": case.priority,
-
-            "currentAssigneeId": case.current_assignee_id,
-
-            "currentAssigneeName": (
-                case.current_assignee.full_name
-                if case.current_assignee
-                else None
-            ),
-
             "currentStepName": case.current_step_name,
             "sourceType": case.source_type,
-            "applicantName": case.applicant_name,
         })
 
     return jsonify({
