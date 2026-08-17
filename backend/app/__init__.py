@@ -11,6 +11,7 @@ from app.extensions import migrate
 from app.routes.health import health_bp
 from app.routes.cases import cases_bp
 from app.routes.imports import imports_bp
+from app.routes.dashboard import dashboard_bp
 
 
 
@@ -38,7 +39,6 @@ def create_app():
 
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-
     db.init_app(app)
     migrate.init_app(app, db)  # Migrate schema database
     with app.app_context():
@@ -59,6 +59,11 @@ def create_app():
 
     app.register_blueprint(
         imports_bp,
+        url_prefix="/api/v1"
+    )
+
+    app.register_blueprint(
+        dashboard_bp,
         url_prefix="/api/v1"
     )
 
