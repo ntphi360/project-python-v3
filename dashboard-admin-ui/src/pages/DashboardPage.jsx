@@ -1,3 +1,8 @@
+import { useEffect, useMemo, useState } from "react";
+import { API_BASE_URL } from "../config/api";
+import { Link } from "react-router-dom";
+import "./DashboardPage.css";
+
 import {
   CircleCheckBig,
   Clock3,
@@ -21,53 +26,8 @@ import {
   YAxis,
 } from "recharts";
 
-import { Link } from "react-router-dom";
-
-import "./DashboardPage.css";
-
-const kpiCards = [
-  {
-    title: "Tổng hồ sơ",
-    value: 0,
-    change: "Chưa có dữ liệu",
-    trend: "up",
-    icon: Files,
-    tone: "blue",
-  },
-  {
-    title: "Hồ sơ sắp hạn",
-    value: 0,
-    change: "Chưa có dữ liệu",
-    trend: "down",
-    icon: Clock3,
-    tone: "orange",
-  },
-  {
-    title: "Hồ sơ quá hạn",
-    value: 0,
-    change: "Chưa có dữ liệu",
-    trend: "down",
-    icon: TriangleAlert,
-    tone: "red",
-  },
-  {
-    title: "Đã hoàn thành",
-    value: 0,
-    change: "Chưa có dữ liệu",
-    trend: "up",
-    icon: CircleCheckBig,
-    tone: "green",
-  },
-];
-
-// dữ liệu sẽ lấy từ api sau
-const statusData = [];
-
-// dữ liệu sẽ lấy từ api sau
+// Phần biểu đồ theo thời gian sẽ làm sau
 const timelineData = [];
-
-// dữ liệu sẽ lấy từ api sau
-const attentionCases = [];
 
 const chartTooltipStyle = {
   border: "1px solid #e4eaf2",
@@ -75,6 +35,7 @@ const chartTooltipStyle = {
   boxShadow: "0 6px 18px rgba(32, 56, 85, 0.1)",
   fontSize: 12,
 };
+
 
 function DonutCenterLabel({ total, viewBox }) {
   const { cx, cy } = viewBox ?? {};
@@ -109,11 +70,161 @@ function DonutCenterLabel({ total, viewBox }) {
   );
 }
 
+
 function DashboardPage() {
+  const [summary, setSummary] = useState({
+    total: 0,
+    upcoming: 0,
+    overdue: 0,
+    completed: 0,
+  });
+
+  const [statusData, setStatusData] = useState([]);
+  const [attentionCases, setAttentionCases] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+      const response = await fetch(
+    `${API_BASE_URL}/dashboard`
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Dashboard API error: ${response.status}`
+          );
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          throw new Error(
+            result.message || "Không thể lấy dữ liệu dashboard"
+          );
+        }
+
+        setSummary(
+          result.data?.summary ?? {
+            total: 0,
+            upcoming: 0,
+            overdue: 0,
+            completed: 0,
+          }
+        );
+
+        const statusColors = {
+          "Đang xử lý": "#2775e8",
+          "Đã hoàn thành": "#22a667",
+          "Quá hạn": "#e5484d",
+          "Sắp hạn": "#f59e0b",
+        };
+
+        const statusList =
+          result.data?.statusData ?? [];
+
+        setStatusData(
+          statusList.map((item) => ({
+            ...item,
+            fill:
+              statusColors[item.name] ||
+              "#94a3b8",
+          }))
+        );
+
+        setAttentionCases(
+          result.data?.attentionCases ?? []
+        );
+      } catch (error) {
+        console.error(
+          "Lỗi lấy dữ liệu dashboard:",
+          error
+        );
+
+        setError(
+          "Không thể tải dữ liệu dashboard."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboard();
+  }, []);
+
+
+  const kpiCards = useMemo(
+    () => [
+      {
+        title: "Tổng hồ sơ",
+        value: summary.total,
+        change: "Tổng số hồ sơ",
+        trend: "up",
+        icon: Files,
+        tone: "blue",
+      },
+      {
+        title: "Hồ sơ sắp hạn",
+        value: summary.upcoming,
+        change: "Cần xử lý sớm",
+        trend: "down",
+        icon: Clock3,
+        tone: "orange",
+      },
+      {
+        title: "Hồ sơ quá hạn",
+        value: summary.overdue,
+        change: "Đã quá hạn xử lý",
+        trend: "down",
+        icon: TriangleAlert,
+        tone: "red",
+      },
+      {
+        title: "Đã hoàn thành",
+        value: summary.completed,
+        change: "Đã xử lý xong",
+        trend: "up",
+        icon: CircleCheckBig,
+        tone: "green",
+      },
+    ],
+    [summary]
+  );
+
+
   const totalStatusCases = statusData.reduce(
     (total, item) => total + item.value,
     0
   );
+
+
+  if (loading) {
+    return (
+      <section className="dashboard-page">
+        <div className="dashboard-empty">
+          Đang tải dữ liệu...
+        </div>
+      </section>
+    );
+  }
+
+
+  if (error) {
+    return (
+      <section className="dashboard-page">
+        <div className="dashboard-empty">
+          {error}
+        </div>
+      </section>
+    );
+  }
+
 
   return (
     <section className="dashboard-page">
@@ -125,6 +236,7 @@ function DashboardPage() {
           trong hệ thống.
         </p>
       </div>
+
 
       <div
         className="kpi-grid"
@@ -166,7 +278,7 @@ function DashboardPage() {
                 </div>
 
                 <strong className="kpi-card__value">
-                  {value}
+                  {value.toLocaleString("vi-VN")}
                 </strong>
 
                 <div
@@ -186,6 +298,7 @@ function DashboardPage() {
         )}
       </div>
 
+
       <div className="dashboard-charts">
         <article className="dashboard-card dashboard-card--status-chart">
           <div className="dashboard-card__header">
@@ -194,9 +307,12 @@ function DashboardPage() {
                 Thống kê hồ sơ theo trạng thái
               </h2>
 
-              <p>Phân bổ hồ sơ hiện tại</p>
+              <p>
+                Phân bổ hồ sơ hiện tại
+              </p>
             </div>
           </div>
+
 
           <div
             className="status-chart"
@@ -250,6 +366,7 @@ function DashboardPage() {
               )}
             </div>
 
+
             <ul
               className="status-chart__legend"
               aria-label="Chú thích trạng thái hồ sơ"
@@ -275,9 +392,10 @@ function DashboardPage() {
                     <small>
                       {totalStatusCases > 0
                         ? Math.round(
-                            (item.value /
-                              totalStatusCases) *
-                              100
+                            (
+                              item.value /
+                              totalStatusCases
+                            ) * 100
                           )
                         : 0}
                       % ·{" "}
@@ -292,10 +410,13 @@ function DashboardPage() {
           </div>
         </article>
 
+
         <article className="dashboard-card dashboard-card--line-chart">
           <div className="dashboard-card__header">
             <div>
-              <h2>Hồ sơ theo thời gian</h2>
+              <h2>
+                Hồ sơ theo thời gian
+              </h2>
 
               <p>
                 Tình hình tiếp nhận và hoàn thành
@@ -303,6 +424,7 @@ function DashboardPage() {
               </p>
             </div>
           </div>
+
 
           <div
             className="timeline-chart"
@@ -398,10 +520,13 @@ function DashboardPage() {
         </article>
       </div>
 
+
       <article className="dashboard-card records-card">
         <div className="dashboard-card__header">
           <div>
-            <h2>Hồ sơ cần chú ý</h2>
+            <h2>
+              Hồ sơ cần chú ý
+            </h2>
           </div>
 
           <Link
@@ -411,6 +536,7 @@ function DashboardPage() {
             Xem tất cả
           </Link>
         </div>
+
 
         <div className="records-table-wrap">
           <table className="records-table">
@@ -442,6 +568,7 @@ function DashboardPage() {
               </tr>
             </thead>
 
+
             <tbody>
               {attentionCases.map(
                 (caseItem) => (
@@ -462,8 +589,13 @@ function DashboardPage() {
                     </td>
 
                     <td>
-                      {caseItem.appointmentDate ??
-                        "—"}
+                      {caseItem.appointmentDate
+                        ? new Date(
+                            caseItem.appointmentDate
+                          ).toLocaleDateString(
+                            "vi-VN"
+                          )
+                        : "—"}
                     </td>
 
                     <td>
@@ -496,5 +628,6 @@ function DashboardPage() {
     </section>
   );
 }
+
 
 export default DashboardPage;
