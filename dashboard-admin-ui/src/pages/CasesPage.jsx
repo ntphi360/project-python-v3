@@ -1,6 +1,5 @@
 import {
   useEffect,
-  useMemo,
   useState,
 } from "react";
 
@@ -16,7 +15,7 @@ import { getCases } from "../services/caseService";
 
 import "./CasesPage.css";
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 10;
 
 const caseStatuses = [
   "Mới tiếp nhận",
@@ -30,6 +29,10 @@ const caseStatuses = [
 const emptyFilters = {
   search: "",
   status: "",
+  department: "",
+  assignee: "",
+  fromDate: "",
+  toDate: "",
 };
 
 
@@ -106,7 +109,7 @@ function CasesPage() {
     useState(1);
 
 
-  // Lấy danh sách hồ sơ theo trang từ backend
+  // Lấy danh sách hồ sơ từ backend
   useEffect(() => {
     const fetchCases = async () => {
       try {
@@ -115,7 +118,8 @@ function CasesPage() {
 
         const data = await getCases(
           currentPage,
-          PAGE_SIZE
+          PAGE_SIZE,
+          appliedFilters
         );
 
         setCaseList(data?.items ?? []);
@@ -142,47 +146,7 @@ function CasesPage() {
     };
 
     fetchCases();
-  }, [currentPage]);
-
-
-  // Tạm thời lọc dữ liệu trên trang hiện tại
-  const filteredCases = useMemo(() => {
-    return caseList.filter((caseItem) => {
-      const search = appliedFilters.search
-        .trim()
-        .toLocaleLowerCase("vi");
-
-      const caseCode = String(
-        caseItem.caseCode ?? ""
-      ).toLocaleLowerCase("vi");
-
-      const applicantName = String(
-        caseItem.applicantName ?? ""
-      ).toLocaleLowerCase("vi");
-
-      const procedureName = String(
-        caseItem.procedureName ?? ""
-      ).toLocaleLowerCase("vi");
-
-      const assigneeName = String(
-        caseItem.assigneeName ?? ""
-      ).toLocaleLowerCase("vi");
-
-      const matchesSearch =
-        !search ||
-        caseCode.includes(search) ||
-        applicantName.includes(search) ||
-        procedureName.includes(search) ||
-        assigneeName.includes(search);
-
-      const matchesStatus =
-        !appliedFilters.status ||
-        caseItem.status ===
-          appliedFilters.status;
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [appliedFilters, caseList]);
+  }, [currentPage, appliedFilters]);
 
 
   function changeDraftFilter(name, value) {
@@ -196,14 +160,23 @@ function CasesPage() {
   function applyFilters(event) {
     event.preventDefault();
 
-    setAppliedFilters(draftFilters);
+    setAppliedFilters({
+      ...draftFilters,
+    });
+
     setCurrentPage(1);
   }
 
 
   function resetFilters() {
-    setDraftFilters(emptyFilters);
-    setAppliedFilters(emptyFilters);
+    setDraftFilters({
+      ...emptyFilters,
+    });
+
+    setAppliedFilters({
+      ...emptyFilters,
+    });
+
     setCurrentPage(1);
   }
 
@@ -295,6 +268,72 @@ function CasesPage() {
         </label>
 
 
+        <label>
+          <span>Phòng ban</span>
+
+          <input
+            type="text"
+            placeholder="Tên phòng ban..."
+            value={draftFilters.department}
+            onChange={(event) =>
+              changeDraftFilter(
+                "department",
+                event.target.value
+              )
+            }
+          />
+        </label>
+
+
+        <label>
+          <span>Người xử lý</span>
+
+          <input
+            type="text"
+            placeholder="Tên cán bộ..."
+            value={draftFilters.assignee}
+            onChange={(event) =>
+              changeDraftFilter(
+                "assignee",
+                event.target.value
+              )
+            }
+          />
+        </label>
+
+
+        <label>
+          <span>Từ ngày tiếp nhận</span>
+
+          <input
+            type="date"
+            value={draftFilters.fromDate}
+            onChange={(event) =>
+              changeDraftFilter(
+                "fromDate",
+                event.target.value
+              )
+            }
+          />
+        </label>
+
+
+        <label>
+          <span>Đến ngày tiếp nhận</span>
+
+          <input
+            type="date"
+            value={draftFilters.toDate}
+            onChange={(event) =>
+              changeDraftFilter(
+                "toDate",
+                event.target.value
+              )
+            }
+          />
+        </label>
+
+
         <div className="cases-filter-card__actions">
           <button
             className="cases-button cases-button--primary"
@@ -370,7 +409,7 @@ function CasesPage() {
 
 
                 <tbody>
-                  {filteredCases.map(
+                  {caseList.map(
                     (caseItem) => (
                       <tr key={caseItem.id}>
                         <td className="cases-table__code">
@@ -428,7 +467,7 @@ function CasesPage() {
                   )}
 
 
-                  {!filteredCases.length && (
+                  {!caseList.length && (
                     <tr>
                       <td
                         className="cases-table__empty"

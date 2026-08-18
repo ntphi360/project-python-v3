@@ -169,6 +169,19 @@
 .case-delete-confirm dd { margin: 0; color: #42536c; font-size: 10.5px; overflow-wrap: anywhere; }
 .case-delete-confirm small { color: #8a97aa; font-size: 9.5px; }
 
+.cases-filter-card {
+  display: grid;
+  grid-template-columns:
+    minmax(220px, 1.4fr)
+    repeat(3, minmax(140px, 1fr));
+  gap: 12px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid var(--case-border);
+  border-radius: 10px;
+  box-shadow: var(--case-shadow);
+}
+
 @media (max-width: 1120px) { .cases-filter-card { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .cases-filter-card { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cases-filter-card__actions { grid-column: 1 / -1; } }
 @media (max-width: 520px) {
