@@ -213,3 +213,101 @@ def get_cases():
         "message": "Lấy danh sách hồ sơ thành công",
         "errors": None,
     }), 200
+
+@cases_bp.get("/cases/<int:case_id>")
+def get_case_detail(case_id):
+    case = Case.query.get(case_id)
+
+    if not case:
+        return jsonify({
+            "success": False,
+            "data": None,
+            "message": "Không tìm thấy hồ sơ",
+            "errors": {
+                "caseId": case_id
+            }
+        }), 404
+
+    data = {
+        "id": case.id,
+        "caseCode": case.external_case_code,
+
+        "procedureId": case.procedure_id,
+        "procedureName": (
+            case.procedure.name
+            if case.procedure
+            else None
+        ),
+
+        "departmentId": case.department_id,
+        "departmentName": (
+            case.department.name
+            if case.department
+            else None
+        ),
+
+        "assigneeId": case.current_assignee_id,
+        "assigneeName": (
+            case.current_assignee.full_name
+            if case.current_assignee
+            else None
+        ),
+
+        "applicantName": case.applicant_name,
+        "applicantPhone": case.applicant_phone,
+        "agencyName": case.agency_name,
+
+        "receivedAt": (
+            case.received_at.isoformat()
+            if case.received_at
+            else None
+        ),
+
+        "appointmentDate": (
+            case.appointment_date.isoformat()
+            if case.appointment_date
+            else None
+        ),
+
+        "dueAt": (
+            case.due_at.isoformat()
+            if case.due_at
+            else None
+        ),
+
+        "completedAt": (
+            case.completed_at.isoformat()
+            if case.completed_at
+            else None
+        ),
+
+        "status": case.status,
+        "priority": case.priority,
+        "currentStepName": case.current_step_name,
+        "sourceType": case.source_type,
+
+        "externalUpdatedAt": (
+            case.external_updated_at.isoformat()
+            if case.external_updated_at
+            else None
+        ),
+
+        "createdAt": (
+            case.created_at.isoformat()
+            if case.created_at
+            else None
+        ),
+
+        "updatedAt": (
+            case.updated_at.isoformat()
+            if case.updated_at
+            else None
+        ),
+    }
+
+    return jsonify({
+        "success": True,
+        "data": data,
+        "message": "Lấy chi tiết hồ sơ thành công",
+        "errors": None
+    }), 200
