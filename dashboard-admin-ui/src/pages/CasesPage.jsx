@@ -9,9 +9,13 @@ import {
   Filter,
   RotateCcw,
   Search,
+  X,
 } from "lucide-react";
 
-import { getCases } from "../services/caseService";
+import {
+  getCaseById,
+  getCases,
+} from "../services/caseService";
 
 import "./CasesPage.css";
 
@@ -108,8 +112,16 @@ function CasesPage() {
   const [currentPage, setCurrentPage] =
     useState(1);
 
+  const [selectedCase, setSelectedCase] =
+    useState(null);
 
-  // Lấy danh sách hồ sơ từ backend
+  const [detailLoading, setDetailLoading] =
+    useState(false);
+
+  const [detailError, setDetailError] =
+    useState("");
+
+
   useEffect(() => {
     const fetchCases = async () => {
       try {
@@ -147,6 +159,34 @@ function CasesPage() {
 
     fetchCases();
   }, [currentPage, appliedFilters]);
+
+
+  async function openCaseDetail(caseId) {
+    try {
+      setSelectedCase(null);
+      setDetailLoading(true);
+      setDetailError("");
+
+      const data = await getCaseById(caseId);
+
+      setSelectedCase(data);
+    } catch (error) {
+      console.error(error);
+
+      setDetailError(
+        "Không thể tải chi tiết hồ sơ."
+      );
+    } finally {
+      setDetailLoading(false);
+    }
+  }
+
+
+  function closeCaseDetail() {
+    setSelectedCase(null);
+    setDetailError("");
+    setDetailLoading(false);
+  }
 
 
   function changeDraftFilter(name, value) {
@@ -386,92 +426,90 @@ function CasesPage() {
                 <thead>
                   <tr>
                     <th>Mã hồ sơ</th>
-
                     <th>Chủ hồ sơ</th>
-
-                    <th>
-                      Thủ tục hành chính
-                    </th>
-
+                    <th>Thủ tục hành chính</th>
                     <th>Phòng ban</th>
-
                     <th>Người xử lý</th>
-
                     <th>Ngày tiếp nhận</th>
-
                     <th>Ngày hẹn trả</th>
-
                     <th>Hạn xử lý</th>
-
                     <th>Trạng thái</th>
+                    <th>Thao tác</th>
                   </tr>
                 </thead>
 
-
                 <tbody>
-                  {caseList.map(
-                    (caseItem) => (
-                      <tr key={caseItem.id}>
-                        <td className="cases-table__code">
-                          {caseItem.caseCode ??
-                            "—"}
-                        </td>
+                  {caseList.map((caseItem) => (
+                    <tr
+                        key={caseItem.id}
+                        className="cases-table__row"
+                        onClick={() =>
+                            openCaseDetail(caseItem.id)
+                          }>
+                      <td className="cases-table__code">
+                        {caseItem.caseCode ?? "—"}
+                      </td>
 
-                        <td className="cases-table__name">
-                          {caseItem.applicantName ??
-                            "—"}
-                        </td>
+                      <td className="cases-table__name">
+                        {caseItem.applicantName ?? "—"}
+                      </td>
 
-                        <td>
-                          {caseItem.procedureName ??
-                            "—"}
-                        </td>
+                      <td>
+                        {caseItem.procedureName ?? "—"}
+                      </td>
 
-                        <td>
-                          {caseItem.departmentName ??
-                            "—"}
-                        </td>
+                      <td>
+                        {caseItem.departmentName ?? "—"}
+                      </td>
 
-                        <td>
-                          {caseItem.assigneeName ??
-                            "—"}
-                        </td>
+                      <td>
+                        {caseItem.assigneeName ?? "—"}
+                      </td>
 
-                        <td>
-                          {formatDate(
-                            caseItem.receivedAt
-                          )}
-                        </td>
+                      <td>
+                        {formatDate(
+                          caseItem.receivedAt
+                        )}
+                      </td>
 
-                        <td>
-                          {formatDateTime(
-                            caseItem.appointmentDate
-                          )}
-                        </td>
+                      <td>
+                        {formatDateTime(
+                          caseItem.appointmentDate
+                        )}
+                      </td>
 
-                        <td>
-                          {formatDateTime(
-                            caseItem.dueAt
-                          )}
-                        </td>
+                      <td>
+                        {formatDateTime(
+                          caseItem.dueAt
+                        )}
+                      </td>
 
-                        <td>
-                          <StatusBadge
-                            status={
-                              caseItem.status
-                            }
-                          />
-                        </td>
-                      </tr>
-                    )
-                  )}
+                      <td>
+                        <StatusBadge
+                          status={caseItem.status}
+                        />
+                      </td>
+
+                      <td>
+                        <button
+                          type="button"
+                          className="cases-detail-button"
+                           onClick={(event) => {
+                              event.stopPropagation();
+                              openCaseDetail(caseItem.id);
+                            }}>
+                          Chi tiết
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
 
 
                   {!caseList.length && (
                     <tr>
                       <td
                         className="cases-table__empty"
-                        colSpan="9"
+                        colSpan="10"
                       >
                         Chưa có dữ liệu hồ sơ.
                       </td>
@@ -491,9 +529,7 @@ function CasesPage() {
               <div>
                 <button
                   aria-label="Trang trước"
-                  disabled={
-                    !pagination.hasPrev
-                  }
+                  disabled={!pagination.hasPrev}
                   type="button"
                   onClick={goToPreviousPage}
                 >
@@ -503,9 +539,7 @@ function CasesPage() {
 
                 <button
                   aria-label="Trang sau"
-                  disabled={
-                    !pagination.hasNext
-                  }
+                  disabled={!pagination.hasNext}
                   type="button"
                   onClick={goToNextPage}
                 >
@@ -517,6 +551,189 @@ function CasesPage() {
           </>
         )}
       </article>
+
+
+      {(selectedCase ||
+        detailLoading ||
+        detailError) && (
+        <div
+          className="case-modal"
+          onClick={closeCaseDetail}
+        >
+          <div
+            className="case-modal__dialog"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+            <div className="case-modal__header">
+              <h2>Chi tiết hồ sơ</h2>
+
+              <button
+                type="button"
+                className="case-icon-button"
+                aria-label="Đóng"
+                onClick={closeCaseDetail}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+
+            <div className="case-modal__body">
+              {detailLoading && (
+                <div className="cases-table__empty">
+                  Đang tải chi tiết hồ sơ...
+                </div>
+              )}
+
+
+              {!detailLoading &&
+                detailError && (
+                  <div className="cases-table__empty">
+                    {detailError}
+                  </div>
+                )}
+
+
+              {!detailLoading &&
+                !detailError &&
+                selectedCase && (
+                  <dl className="case-details">
+                    <div className="case-details__item">
+                      <dt>Mã hồ sơ</dt>
+                      <dd>
+                        {selectedCase.caseCode ?? "—"}
+                      </dd>
+                    </div>
+
+
+                    <div className="case-details__item">
+                      <dt>Chủ hồ sơ</dt>
+                      <dd>
+                        {selectedCase.applicantName ?? "—"}
+                      </dd>
+                    </div>
+
+
+                    <div className="case-details__item">
+                      <dt>Số điện thoại</dt>
+                      <dd>
+                        {selectedCase.applicantPhone ?? "—"}
+                      </dd>
+                    </div>
+
+
+                    <div className="case-details__item">
+                      <dt>Đơn vị</dt>
+                      <dd>
+                        {selectedCase.agencyName ?? "—"}
+                      </dd>
+                    </div>
+
+
+                    <div className="case-details__item case-details__item--wide">
+                      <dt>Thủ tục hành chính</dt>
+                      <dd>
+                        {selectedCase.procedureName ?? "—"}
+                      </dd>
+                    </div>
+
+
+                    <div className="case-details__item">
+                      <dt>Phòng ban</dt>
+                      <dd>
+                        {selectedCase.departmentName ?? "—"}
+                      </dd>
+                    </div>
+
+
+                    <div className="case-details__item">
+                      <dt>Người xử lý</dt>
+                      <dd>
+                        {selectedCase.assigneeName ?? "—"}
+                      </dd>
+                    </div>
+
+
+                    <div className="case-details__item">
+                      <dt>Ngày tiếp nhận</dt>
+                      <dd>
+                        {formatDateTime(
+                          selectedCase.receivedAt
+                        )}
+                      </dd>
+                    </div>
+
+
+                    <div className="case-details__item">
+                      <dt>Ngày hẹn trả</dt>
+                      <dd>
+                        {formatDateTime(
+                          selectedCase.appointmentDate
+                        )}
+                      </dd>
+                    </div>
+
+
+                    <div className="case-details__item">
+                      <dt>Hạn xử lý</dt>
+                      <dd>
+                        {formatDateTime(
+                          selectedCase.dueAt
+                        )}
+                      </dd>
+                    </div>
+
+
+                    <div className="case-details__item">
+                      <dt>Ngày hoàn thành</dt>
+                      <dd>
+                        {formatDateTime(
+                          selectedCase.completedAt
+                        )}
+                      </dd>
+                    </div>
+
+
+                    <div className="case-details__item">
+                      <dt>Trạng thái</dt>
+                      <dd>
+                        <StatusBadge
+                          status={selectedCase.status}
+                        />
+                      </dd>
+                    </div>
+
+
+                    <div className="case-details__item">
+                      <dt>Ưu tiên</dt>
+                      <dd>
+                        {selectedCase.priority ?? "—"}
+                      </dd>
+                    </div>
+
+
+                    <div className="case-details__item">
+                      <dt>Bước hiện tại</dt>
+                      <dd>
+                        {selectedCase.currentStepName ?? "—"}
+                      </dd>
+                    </div>
+
+
+                    <div className="case-details__item">
+                      <dt>Nguồn dữ liệu</dt>
+                      <dd>
+                        {selectedCase.sourceType ?? "—"}
+                      </dd>
+                    </div>
+                  </dl>
+                )}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

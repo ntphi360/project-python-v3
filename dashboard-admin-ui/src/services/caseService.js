@@ -21,3 +21,9 @@ export const getCases = async (
 
   return response.data.data;
 };
+
+export const getCaseById = async (id) => {
+  const response = await api.get(`/cases/${id}`);
+
+  return response.data.data;
+};

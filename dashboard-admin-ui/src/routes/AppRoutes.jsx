@@ -15,6 +15,7 @@ function AppRoutes() {
         <Route index element={<DashboardPage />} />
 
         <Route path="cases" element={<CasesPage />} />
+        <Route path="cases/:id" element={<CasesPage />} />
 
         <Route path="alerts" element={<AlertsPage />} />
 

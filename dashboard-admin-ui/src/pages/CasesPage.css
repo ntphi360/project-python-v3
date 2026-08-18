@@ -169,6 +169,7 @@
 .case-delete-confirm dd { margin: 0; color: #42536c; font-size: 10.5px; overflow-wrap: anywhere; }
 .case-delete-confirm small { color: #8a97aa; font-size: 9.5px; }
 
+/*optional*/
 .cases-filter-card {
   display: grid;
   grid-template-columns:
@@ -181,6 +182,29 @@
   border-radius: 10px;
   box-shadow: var(--case-shadow);
 }
+
+.cases-detail-button {
+  padding: 6px 12px;
+
+  color: #1768dc;
+  background: #eef5ff;
+
+  border: 1px solid #cfe0ff;
+  border-radius: 6px;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cases-detail-button:hover {
+  color: #0f55bd;
+  background: #e2edff;
+  border-color: #a9c8ff;
+}
+
 
 @media (max-width: 1120px) { .cases-filter-card { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .cases-filter-card { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cases-filter-card__actions { grid-column: 1 / -1; } }
