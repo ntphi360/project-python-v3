@@ -27,3 +27,21 @@ export const getCaseById = async (id) => {
 
   return response.data.data;
 };
+
+export const createCase = async (data) => {
+  const response = await api.post("/cases", data);
+
+  return response.data.data;
+};
+
+export const updateCase = async (id, data) => {
+  const response = await api.put(`/cases/${id}`, data);
+
+  return response.data.data;
+};
+
+export const deleteCase = async (id) => {
+  const response = await api.delete(`/cases/${id}`);
+
+  return response.data;
+};
