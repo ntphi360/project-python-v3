@@ -80,6 +80,7 @@
 .case-form-grid select:focus,
 .case-form-grid textarea:focus { border-color: #6ba4f2; box-shadow: 0 0 0 3px rgba(18, 105, 232, 0.08); }
 .case-form-grid select:disabled { color: #7d8a9e; background: #f5f7fa; cursor: not-allowed; }
+.case-form-grid input:read-only { color: #52627a; background: #f7f9fc; cursor: default; }
 .case-form-grid textarea { min-height: 72px; padding-block: 8px; resize: vertical; }
 
 .cases-search-input { position: relative; }

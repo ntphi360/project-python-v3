@@ -20,6 +20,11 @@ import {
   getCases,
   updateCase,
 } from "../services/caseService";
+import {
+  getDepartments,
+  getProcedures,
+  getUsers,
+} from "../services/catalogService";
 import "./CasesPage.css";
 
 const PAGE_SIZE = 10;
@@ -184,11 +189,108 @@ function CaseFormModal({ initialCase, onClose, onSubmit }) {
   const [form, setForm] = useState(() => getCaseFormValues(initialCase));
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
+  const [procedures, setProcedures] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [catalogsLoading, setCatalogsLoading] = useState(true);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [catalogsError, setCatalogsError] = useState("");
+  const [usersError, setUsersError] = useState("");
   const isEditing = Boolean(initialCase);
+  const selectedProcedure = procedures.find(
+    (procedure) => String(procedure.id) === String(form.procedureId),
+  );
+  const currentAssigneeIsOutsideDepartment = (
+    isEditing
+    && form.assigneeId
+    && !usersLoading
+    && !users.some((user) => String(user.id) === String(form.assigneeId))
+  );
+  const catalogsReady = (
+    !catalogsLoading
+    && !catalogsError
+    && procedures.length > 0
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCatalogs() {
+      try {
+        setCatalogsLoading(true);
+        setCatalogsError("");
+        const [procedureData, departmentData] = await Promise.all([
+          getProcedures(),
+          getDepartments(),
+        ]);
+
+        if (!cancelled) {
+          setProcedures(procedureData ?? []);
+          setDepartments(departmentData ?? []);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setCatalogsError(getApiErrorMessage(
+            error,
+            "Không thể tải danh mục thủ tục và phòng ban.",
+          ));
+        }
+      } finally {
+        if (!cancelled) setCatalogsLoading(false);
+      }
+    }
+
+    loadCatalogs();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!form.departmentId) {
+      return () => { cancelled = true; };
+    }
+
+    async function loadUsers() {
+      try {
+        setUsersLoading(true);
+        setUsersError("");
+        const userData = await getUsers(Number(form.departmentId));
+
+        if (!cancelled) {
+          setUsers(userData ?? []);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setUsers([]);
+          setUsersError(getApiErrorMessage(
+            error,
+            "Không thể tải danh sách cán bộ xử lý.",
+          ));
+        }
+      } finally {
+        if (!cancelled) setUsersLoading(false);
+      }
+    }
+
+    loadUsers();
+    return () => { cancelled = true; };
+  }, [form.departmentId]);
 
   function updateForm(name, value) {
     setFormError("");
     setForm((current) => ({ ...current, [name]: value }));
+  }
+
+  function updateDepartment(departmentId) {
+    setFormError("");
+    setUsersError("");
+    setUsers([]);
+    setForm((current) => ({
+      ...current,
+      departmentId,
+      assigneeId: "",
+    }));
   }
 
   async function handleSubmit(event) {
@@ -199,14 +301,13 @@ function CaseFormModal({ initialCase, onClose, onSubmit }) {
       return;
     }
 
-    const idFields = ["procedureId", "departmentId", "assigneeId"];
-    const invalidId = idFields.find((field) => (
-      form[field] !== ""
-      && (!Number.isInteger(Number(form[field])) || Number(form[field]) <= 0)
-    ));
+    if (!form.procedureId) {
+      setFormError("Vui lòng chọn thủ tục hành chính.");
+      return;
+    }
 
-    if (invalidId) {
-      setFormError("ID thủ tục, phòng ban và người xử lý phải là số nguyên dương.");
+    if (!catalogsReady || usersLoading || catalogsError || usersError) {
+      setFormError("Vui lòng chờ dữ liệu danh mục tải hoàn tất.");
       return;
     }
 
@@ -232,9 +333,81 @@ function CaseFormModal({ initialCase, onClose, onSubmit }) {
           <label><span>Chủ hồ sơ</span><input value={form.applicantName} onChange={(event) => updateForm("applicantName", event.target.value)} /></label>
           <label><span>Số điện thoại</span><input value={form.applicantPhone} onChange={(event) => updateForm("applicantPhone", event.target.value)} /></label>
           <label><span>Đơn vị</span><input value={form.agencyName} onChange={(event) => updateForm("agencyName", event.target.value)} /></label>
-          <label><span>Procedure ID</span><input min="1" step="1" type="number" value={form.procedureId} onChange={(event) => updateForm("procedureId", event.target.value)} /></label>
-          <label><span>Department ID</span><input min="1" step="1" type="number" value={form.departmentId} onChange={(event) => updateForm("departmentId", event.target.value)} /></label>
-          <label><span>Assignee ID</span><input min="1" step="1" type="number" value={form.assigneeId} onChange={(event) => updateForm("assigneeId", event.target.value)} /></label>
+          <label>
+            <span>Thủ tục <em>*</em></span>
+            <select
+              disabled={catalogsLoading || submitting || Boolean(catalogsError)}
+              required
+              value={form.procedureId}
+              onChange={(event) => updateForm("procedureId", event.target.value)}
+            >
+              <option value="">
+                {catalogsLoading
+                  ? "Đang tải thủ tục..."
+                  : procedures.length
+                    ? "Chọn thủ tục"
+                    : "Không có dữ liệu thủ tục"}
+              </option>
+              {procedures.map((procedure) => (
+                <option key={procedure.id} value={procedure.id}>
+                  {procedure.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Lĩnh vực</span>
+            <input
+              placeholder="Chưa xác định"
+              readOnly
+              value={selectedProcedure?.fieldName ?? ""}
+            />
+          </label>
+          <label>
+            <span>Phòng ban</span>
+            <select
+              disabled={catalogsLoading || submitting || Boolean(catalogsError)}
+              value={form.departmentId}
+              onChange={(event) => updateDepartment(event.target.value)}
+            >
+              <option value="">
+                {catalogsLoading ? "Đang tải phòng ban..." : "Chọn phòng ban"}
+              </option>
+              {departments.map((department) => (
+                <option key={department.id} value={department.id}>
+                  {department.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Cán bộ xử lý</span>
+            <select
+              disabled={!form.departmentId || usersLoading || submitting || Boolean(usersError)}
+              value={form.assigneeId}
+              onChange={(event) => updateForm("assigneeId", event.target.value)}
+            >
+              <option value="">
+                {!form.departmentId
+                  ? "Chọn phòng ban trước"
+                  : usersLoading
+                    ? "Đang tải cán bộ..."
+                    : users.length
+                      ? "Chọn cán bộ xử lý"
+                      : "Không có cán bộ phù hợp"}
+              </option>
+              {currentAssigneeIsOutsideDepartment && (
+                <option value={form.assigneeId}>
+                  {initialCase.assigneeName || "Cán bộ hiện tại"}
+                </option>
+              )}
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.fullName}
+                </option>
+              ))}
+            </select>
+          </label>
           <label><span>Trạng thái</span><select value={form.status} onChange={(event) => updateForm("status", event.target.value)}>{caseStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select></label>
           <label><span>Ngày tiếp nhận</span><input type="datetime-local" value={form.receivedAt} onChange={(event) => updateForm("receivedAt", event.target.value)} /></label>
           <label><span>Ngày hẹn trả</span><input type="datetime-local" value={form.appointmentDate} onChange={(event) => updateForm("appointmentDate", event.target.value)} /></label>
@@ -242,11 +415,13 @@ function CaseFormModal({ initialCase, onClose, onSubmit }) {
           <label><span>Ưu tiên</span><input value={form.priority} onChange={(event) => updateForm("priority", event.target.value)} /></label>
           <label><span>Bước hiện tại</span><input value={form.currentStepName} onChange={(event) => updateForm("currentStepName", event.target.value)} /></label>
           <label><span>Nguồn dữ liệu</span><input value={form.sourceType} onChange={(event) => updateForm("sourceType", event.target.value)} /></label>
+          {catalogsError && <p className="case-form-error case-form-grid__wide" role="alert">{catalogsError}</p>}
+          {usersError && <p className="case-form-error case-form-grid__wide" role="alert">{usersError}</p>}
           {formError && <p className="case-form-error case-form-grid__wide" role="alert">{formError}</p>}
         </div>
         <footer className="case-modal__footer">
           <button className="cases-button cases-button--secondary" disabled={submitting} type="button" onClick={onClose}>Hủy</button>
-          <button className="cases-button cases-button--primary" disabled={submitting} type="submit">
+          <button className="cases-button cases-button--primary" disabled={submitting || !catalogsReady || usersLoading || Boolean(usersError)} type="submit">
             {submitting && <LoaderCircle className="cases-spinner" size={14} />}
             {submitting ? "Đang lưu..." : isEditing ? "Lưu thay đổi" : "Tạo hồ sơ"}
           </button>
