@@ -2,6 +2,7 @@ from flask import Blueprint, current_app, jsonify, request
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.extensions import db
+from app.models.case import Case
 from app.models.department import Department
 from app.models.procedure import Procedure
 from app.models.procedure_field import ProcedureField
@@ -129,6 +130,31 @@ def get_departments():
     return success_response(
         data,
         "Lấy danh sách phòng ban thành công",
+    )
+
+
+@catalogs_bp.get("/agencies")
+def get_agencies():
+    try:
+        rows = (
+            db.session.query(Case.agency_name)
+            .filter(Case.agency_name.isnot(None))
+            .distinct()
+            .all()
+        )
+    except SQLAlchemyError:
+        return database_error_response("đơn vị")
+
+    names = sorted(
+        row.agency_name
+        for row in rows
+        if row.agency_name.strip()
+    )
+    data = [{"name": name} for name in names]
+
+    return success_response(
+        data,
+        "Lấy danh sách đơn vị thành công",
     )
 
 

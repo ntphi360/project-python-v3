@@ -3,6 +3,7 @@ import unittest
 from flask import Flask
 
 from app.extensions import db
+from app.models.case import Case
 from app.models.department import Department
 from app.models.procedure import Procedure
 from app.models.procedure_field import ProcedureField
@@ -56,6 +57,22 @@ class CatalogsApiTestCase(unittest.TestCase):
                 id=3,
                 full_name="Nguyễn Quang Hoàn",
                 department_id=1,
+            ),
+            Case(
+                external_case_code="HS-AGENCY-1",
+                agency_name="UBND",
+            ),
+            Case(
+                external_case_code="HS-AGENCY-2",
+                agency_name="UBND",
+            ),
+            Case(
+                external_case_code="HS-AGENCY-3",
+                agency_name="Trung tâm phục vụ hành chính công",
+            ),
+            Case(
+                external_case_code="HS-AGENCY-4",
+                agency_name="   ",
             ),
         ])
         db.session.commit()
@@ -144,6 +161,21 @@ class CatalogsApiTestCase(unittest.TestCase):
                 "departmentId": 2,
                 "departmentName": "Phòng Kinh tế",
             },
+        )
+
+    def test_agencies_are_distinct_sorted_and_ignore_blank_values(self):
+        response = self.client.get("/api/v1/agencies")
+
+        self.assert_success_response(
+            response,
+            "Lấy danh sách đơn vị thành công",
+        )
+        self.assertEqual(
+            response.json["data"],
+            [
+                {"name": "Trung tâm phục vụ hành chính công"},
+                {"name": "UBND"},
+            ],
         )
 
     def test_users_can_be_filtered_by_department(self):

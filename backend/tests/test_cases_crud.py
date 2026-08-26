@@ -1,8 +1,11 @@
 import unittest
 from datetime import datetime
+from io import BytesIO
 from unittest.mock import patch
 
 from flask import Flask
+from sqlalchemy.exc import IntegrityError
+from werkzeug.datastructures import FileStorage
 
 from app.extensions import db
 from app.models.case import Case
@@ -11,6 +14,7 @@ from app.models.procedure import Procedure
 from app.models.procedure_field import ProcedureField
 from app.models.user import User
 from app.routes.cases import cases_bp
+from app.services.import_service import import_case_file
 
 
 class CaseCrudApiTestCase(unittest.TestCase):
@@ -115,6 +119,125 @@ class CaseCrudApiTestCase(unittest.TestCase):
         self.assertEqual(case.external_case_code, "HS-MINIMAL")
         self.assertIsNone(case.procedure_id)
         self.assertIsNone(case.received_at)
+
+    def test_post_generates_daily_case_codes_in_sequence(self):
+        fixed_now = datetime(2026, 8, 26, 8, 30, 0)
+
+        with patch("app.routes.cases.datetime") as mocked_datetime:
+            mocked_datetime.now.return_value = fixed_now
+            first_response = self.client.post("/api/v1/cases", json={})
+            second_response = self.client.post("/api/v1/cases", json={})
+
+        self.assertEqual(first_response.status_code, 201)
+        self.assertEqual(second_response.status_code, 201)
+        self.assertEqual(
+            first_response.json["data"]["caseCode"],
+            "H29.259-20260826-0001",
+        )
+        self.assertEqual(
+            second_response.json["data"]["caseCode"],
+            "H29.259-20260826-0002",
+        )
+
+    def test_generated_code_uses_largest_sequence_and_resets_each_day(self):
+        db.session.add(Case(
+            external_case_code="H29.259-20260826-0017",
+        ))
+        db.session.commit()
+
+        with patch("app.routes.cases.datetime") as mocked_datetime:
+            mocked_datetime.now.return_value = datetime(2026, 8, 26, 23, 59)
+            same_day_response = self.client.post("/api/v1/cases", json={})
+            mocked_datetime.now.return_value = datetime(2026, 8, 27, 0, 1)
+            next_day_response = self.client.post("/api/v1/cases", json={})
+
+        self.assertEqual(
+            same_day_response.json["data"]["caseCode"],
+            "H29.259-20260826-0018",
+        )
+        self.assertEqual(
+            next_day_response.json["data"]["caseCode"],
+            "H29.259-20260827-0001",
+        )
+
+    def test_generated_code_retries_after_unique_collision(self):
+        real_commit = db.session.commit
+        real_rollback = db.session.rollback
+        commit_attempts = 0
+
+        def commit_with_first_attempt_collision():
+            nonlocal commit_attempts
+            commit_attempts += 1
+
+            if commit_attempts == 1:
+                raise IntegrityError("INSERT", {}, Exception("duplicate"))
+
+            return real_commit()
+
+        with (
+            patch(
+                "app.routes.cases.generate_case_code",
+                side_effect=[
+                    "H29.259-20260826-0001",
+                    "H29.259-20260826-0002",
+                ],
+            ),
+            patch.object(
+                db.session,
+                "commit",
+                side_effect=commit_with_first_attempt_collision,
+            ),
+            patch.object(
+                db.session,
+                "rollback",
+                wraps=real_rollback,
+            ) as rollback,
+        ):
+            response = self.client.post("/api/v1/cases", json={})
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(
+            response.json["data"]["caseCode"],
+            "H29.259-20260826-0002",
+        )
+        rollback.assert_called_once()
+
+    def test_put_without_case_code_preserves_generated_code(self):
+        with patch("app.routes.cases.datetime") as mocked_datetime:
+            mocked_datetime.now.return_value = datetime(2026, 8, 26, 9, 0)
+            create_response = self.client.post("/api/v1/cases", json={})
+
+        case_id = create_response.json["data"]["id"]
+        case_code = create_response.json["data"]["caseCode"]
+        update_response = self.client.put(
+            f"/api/v1/cases/{case_id}",
+            json={"status": "Đang xử lý"},
+        )
+
+        self.assertEqual(update_response.status_code, 200)
+        self.assertEqual(update_response.json["data"]["caseCode"], case_code)
+        self.assertEqual(db.session.get(Case, case_id).external_case_code, case_code)
+
+    def test_import_keeps_original_case_code(self):
+        csv_content = (
+            "Số hồ sơ,Tên thủ tục hành chính,Tên lĩnh vực,Phòng ban,"
+            "Ngày tiếp nhận,Hạn xử lý,Cán bộ xử lý hiện tại,Trạng thái\n"
+            "IMPORT-ORIGINAL,Thủ tục thử nghiệm,Lĩnh vực thử nghiệm,"
+            "Phòng thử nghiệm,25/08/2026,30/08/2026,"
+            "Người xử lý thử nghiệm,Đang xử lý\n"
+        )
+        upload = FileStorage(
+            stream=BytesIO(csv_content.encode("utf-8-sig")),
+            filename="cases.csv",
+        )
+
+        result = import_case_file(upload)
+
+        self.assertEqual(result["imported"], 1)
+        imported_case = Case.query.filter_by(
+            external_case_code="IMPORT-ORIGINAL"
+        ).one()
+        self.assertEqual(imported_case.source_type, "IMPORT")
 
     def test_post_validates_required_duplicate_datetime_and_foreign_key(self):
         empty_code = self.client.post("/api/v1/cases", json={"caseCode": "   "})

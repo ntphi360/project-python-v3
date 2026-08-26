@@ -1,5 +1,6 @@
 from flask import Blueprint, current_app, jsonify, request
 from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 
 from app.extensions import db
@@ -7,9 +8,14 @@ from app.models.case import Case
 from app.models.department import Department
 from app.models.procedure import Procedure
 from app.models.user import User
+from app.services.case_code_service import (
+    CaseCodeSequenceExhaustedError,
+    generate_case_code,
+)
 
 
 cases_bp = Blueprint("cases", __name__)
+AUTO_CODE_RETRY_LIMIT = 3
 
 DATETIME_FIELDS = {
     "receivedAt": "received_at",
@@ -94,7 +100,7 @@ def validate_case_fields(case, payload, is_create=False):
     errors = {}
     changes = {}
 
-    if is_create or "caseCode" in payload:
+    if "caseCode" in payload:
         case_code, case_code_error = validate_case_code(
             payload.get("caseCode"),
             None if is_create else case.id
@@ -453,9 +459,8 @@ def create_case():
             {"body": "Request body phải là một JSON object"}
         )
 
-    case = Case()
     changes, validation_errors = validate_case_fields(
-        case,
+        Case(),
         payload,
         is_create=True
     )
@@ -467,22 +472,47 @@ def create_case():
             validation_errors
         )
 
-    apply_changes(case, changes)
-
     now = datetime.now()
-    case.created_at = now
-    case.updated_at = now
+    should_generate_case_code = "caseCode" not in payload
+    case = None
 
-    try:
-        db.session.add(case)
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
-        current_app.logger.exception("Không thể tạo hồ sơ")
-        return error_response(
-            "Không thể tạo hồ sơ",
-            500
-        )
+    for attempt in range(AUTO_CODE_RETRY_LIMIT):
+        case = Case()
+        apply_changes(case, changes)
+        case.created_at = now
+        case.updated_at = now
+
+        try:
+            if should_generate_case_code:
+                case.external_case_code = generate_case_code(now)
+
+            db.session.add(case)
+            db.session.commit()
+            break
+        except CaseCodeSequenceExhaustedError:
+            db.session.rollback()
+            return error_response(
+                "Đã hết mã hồ sơ có thể tạo trong ngày",
+                409,
+            )
+        except IntegrityError:
+            db.session.rollback()
+
+            if should_generate_case_code and attempt < AUTO_CODE_RETRY_LIMIT - 1:
+                continue
+
+            return error_response(
+                "Mã hồ sơ đã tồn tại, vui lòng thử lại",
+                409,
+                {"caseCode": "caseCode đã tồn tại"},
+            )
+        except Exception:
+            db.session.rollback()
+            current_app.logger.exception("Không thể tạo hồ sơ")
+            return error_response(
+                "Không thể tạo hồ sơ",
+                500
+            )
 
     return jsonify({
         "success": True,

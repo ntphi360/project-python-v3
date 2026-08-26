@@ -21,6 +21,7 @@ import {
   updateCase,
 } from "../services/caseService";
 import {
+  getAgencies,
   getDepartments,
   getProcedures,
   getUsers,
@@ -129,7 +130,6 @@ function optionalId(value) {
 
 function buildCasePayload(form) {
   return {
-    caseCode: form.caseCode.trim(),
     procedureId: optionalId(form.procedureId),
     departmentId: optionalId(form.departmentId),
     assigneeId: optionalId(form.assigneeId),
@@ -191,6 +191,7 @@ function CaseFormModal({ initialCase, onClose, onSubmit }) {
   const [formError, setFormError] = useState("");
   const [procedures, setProcedures] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [agencies, setAgencies] = useState([]);
   const [users, setUsers] = useState([]);
   const [catalogsLoading, setCatalogsLoading] = useState(true);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -206,6 +207,11 @@ function CaseFormModal({ initialCase, onClose, onSubmit }) {
     && !usersLoading
     && !users.some((user) => String(user.id) === String(form.assigneeId))
   );
+  const currentAgencyIsMissing = (
+    isEditing
+    && form.agencyName
+    && !agencies.includes(form.agencyName)
+  );
   const catalogsReady = (
     !catalogsLoading
     && !catalogsError
@@ -219,14 +225,16 @@ function CaseFormModal({ initialCase, onClose, onSubmit }) {
       try {
         setCatalogsLoading(true);
         setCatalogsError("");
-        const [procedureData, departmentData] = await Promise.all([
+        const [procedureData, departmentData, agencyData] = await Promise.all([
           getProcedures(),
           getDepartments(),
+          getAgencies(),
         ]);
 
         if (!cancelled) {
           setProcedures(procedureData ?? []);
           setDepartments(departmentData ?? []);
+          setAgencies((agencyData ?? []).map((agency) => agency.name));
         }
       } catch (error) {
         if (!cancelled) {
@@ -296,11 +304,6 @@ function CaseFormModal({ initialCase, onClose, onSubmit }) {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    if (!form.caseCode.trim()) {
-      setFormError("Mã hồ sơ không được để trống.");
-      return;
-    }
-
     if (!form.procedureId) {
       setFormError("Vui lòng chọn thủ tục hành chính.");
       return;
@@ -329,10 +332,36 @@ function CaseFormModal({ initialCase, onClose, onSubmit }) {
     <CaseModal onClose={submitting ? undefined : onClose} title={isEditing ? "Chỉnh sửa hồ sơ" : "Thêm hồ sơ"}>
       <form onSubmit={handleSubmit}>
         <div className="case-modal__body case-form-grid">
-          <label><span>Mã hồ sơ <em>*</em></span><input autoFocus required value={form.caseCode} onChange={(event) => updateForm("caseCode", event.target.value)} /></label>
-          <label><span>Chủ hồ sơ</span><input value={form.applicantName} onChange={(event) => updateForm("applicantName", event.target.value)} /></label>
+          <label>
+            <span>Mã hồ sơ</span>
+            <input
+              placeholder={isEditing ? "" : "Tự động tạo khi lưu"}
+              readOnly
+              value={isEditing ? form.caseCode : ""}
+            />
+          </label>
+          <label><span>Chủ hồ sơ</span><input autoFocus value={form.applicantName} onChange={(event) => updateForm("applicantName", event.target.value)} /></label>
           <label><span>Số điện thoại</span><input value={form.applicantPhone} onChange={(event) => updateForm("applicantPhone", event.target.value)} /></label>
-          <label><span>Đơn vị</span><input value={form.agencyName} onChange={(event) => updateForm("agencyName", event.target.value)} /></label>
+          <label>
+            <span>Đơn vị</span>
+            <select
+              disabled={catalogsLoading || submitting || Boolean(catalogsError)}
+              value={form.agencyName}
+              onChange={(event) => updateForm("agencyName", event.target.value)}
+            >
+              <option value="">
+                {catalogsLoading ? "Đang tải đơn vị..." : "Chọn đơn vị"}
+              </option>
+              {currentAgencyIsMissing && (
+                <option value={form.agencyName}>{form.agencyName}</option>
+              )}
+              {agencies.map((agencyName) => (
+                <option key={agencyName} value={agencyName}>
+                  {agencyName}
+                </option>
+              ))}
+            </select>
+          </label>
           <label>
             <span>Thủ tục <em>*</em></span>
             <select
@@ -559,9 +588,12 @@ function CasesPage() {
   }
 
   async function handleCreate(payload) {
-    await createCase(payload);
+    const createdCase = await createCase(payload);
     setIsAdding(false);
-    setFeedback({ type: "success", message: "Tạo hồ sơ thành công." });
+    setFeedback({
+      type: "success",
+      message: `Tạo hồ sơ ${createdCase.caseCode} thành công.`,
+    });
     setReloadVersion((version) => version + 1);
   }
 

@@ -12,6 +12,12 @@ export const getDepartments = async () => {
   return response.data.data;
 };
 
+export const getAgencies = async () => {
+  const response = await api.get("/agencies");
+
+  return response.data.data;
+};
+
 export const getUsers = async (departmentId) => {
   const response = await api.get("/users", {
     params: {
