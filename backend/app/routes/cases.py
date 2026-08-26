@@ -16,6 +16,11 @@ from app.services.case_code_service import (
 
 cases_bp = Blueprint("cases", __name__)
 AUTO_CODE_RETRY_LIMIT = 3
+COMPLETED_STATUSES = {
+    "Hoàn thành",
+    "Đã hoàn thành",
+    "Đã trả kết quả",
+}
 
 DATETIME_FIELDS = {
     "receivedAt": "received_at",
@@ -144,6 +149,27 @@ def validate_case_fields(case, payload, is_create=False):
 def apply_changes(case, changes):
     for model_field, value in changes.items():
         setattr(case, model_field, value)
+
+
+def synchronize_completed_at(case, changes, payload, now, is_create=False):
+    status = changes.get("status", case.status)
+    completed_at_was_supplied = "completedAt" in payload
+
+    if isinstance(status, str) and status in COMPLETED_STATUSES:
+        if completed_at_was_supplied:
+            if changes["completed_at"] is None:
+                changes["completed_at"] = now
+        elif case.completed_at is None:
+            changes["completed_at"] = now
+        return
+
+    if (
+        not is_create
+        and "status" in payload
+        and status != case.status
+    ):
+        changes["completed_at"] = None
+
 
 @cases_bp.get("/cases")
 def get_cases():
@@ -473,6 +499,13 @@ def create_case():
         )
 
     now = datetime.now()
+    synchronize_completed_at(
+        Case(),
+        changes,
+        payload,
+        now,
+        is_create=True,
+    )
     should_generate_case_code = "caseCode" not in payload
     case = None
 
@@ -554,8 +587,10 @@ def update_case(case_id):
             validation_errors
         )
 
+    now = datetime.now()
+    synchronize_completed_at(case, changes, payload, now)
     apply_changes(case, changes)
-    case.updated_at = datetime.now()
+    case.updated_at = now
 
     try:
         db.session.commit()
