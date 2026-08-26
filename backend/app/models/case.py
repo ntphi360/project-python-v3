@@ -107,3 +107,8 @@ class Case(db.Model):
     procedure = db.relationship("Procedure" )
     department = db.relationship("Department")
     current_assignee = db.relationship("User")
+    history = db.relationship(
+        "CaseHistory",
+        back_populates="case",
+        cascade="all, delete-orphan",
+    )

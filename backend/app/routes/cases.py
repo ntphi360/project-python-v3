@@ -5,6 +5,7 @@ from datetime import datetime
 
 from app.extensions import db
 from app.models.case import Case
+from app.models.case_history import CaseHistory
 from app.models.department import Department
 from app.models.procedure import Procedure
 from app.models.user import User
@@ -169,6 +170,82 @@ def synchronize_completed_at(case, changes, payload, now, is_create=False):
         and status != case.status
     ):
         changes["completed_at"] = None
+
+
+def format_history_value(value):
+    return "null" if value is None else f'"{value}"'
+
+
+def create_change_history(case, action, old_value, new_value, label, now):
+    return CaseHistory(
+        case_id=case.id,
+        action=action,
+        old_value=None if old_value is None else str(old_value),
+        new_value=None if new_value is None else str(new_value),
+        note=(
+            f"{label} thay đổi từ {format_history_value(old_value)} "
+            f"sang {format_history_value(new_value)}"
+        ),
+        created_at=now,
+    )
+
+
+def build_update_histories(case, changes, now):
+    histories = []
+
+    if "status" in changes and case.status != changes["status"]:
+        histories.append(create_change_history(
+            case,
+            CaseHistory.STATUS_CHANGED,
+            case.status,
+            changes["status"],
+            "Trạng thái",
+            now,
+        ))
+
+    if (
+        "current_assignee_id" in changes
+        and case.current_assignee_id != changes["current_assignee_id"]
+    ):
+        old_assignee_name = (
+            case.current_assignee.full_name
+            if case.current_assignee
+            else None
+        )
+        new_assignee_id = changes["current_assignee_id"]
+        new_assignee = (
+            db.session.get(User, new_assignee_id)
+            if new_assignee_id is not None
+            else None
+        )
+        new_assignee_name = (
+            new_assignee.full_name
+            if new_assignee
+            else None
+        )
+        histories.append(create_change_history(
+            case,
+            CaseHistory.ASSIGNEE_CHANGED,
+            old_assignee_name,
+            new_assignee_name,
+            "Người xử lý",
+            now,
+        ))
+
+    if (
+        "current_step_name" in changes
+        and case.current_step_name != changes["current_step_name"]
+    ):
+        histories.append(create_change_history(
+            case,
+            CaseHistory.STEP_CHANGED,
+            case.current_step_name,
+            changes["current_step_name"],
+            "Bước xử lý",
+            now,
+        ))
+
+    return histories
 
 
 @cases_bp.get("/cases")
@@ -474,6 +551,46 @@ def get_case_detail(case_id):
     }), 200
 
 
+@cases_bp.get("/cases/<int:case_id>/history")
+def get_case_history(case_id):
+    if db.session.get(Case, case_id) is None:
+        return error_response(
+            "Không tìm thấy hồ sơ",
+            404,
+            {"caseId": case_id},
+        )
+
+    histories = (
+        CaseHistory.query
+        .filter(CaseHistory.case_id == case_id)
+        .order_by(
+            CaseHistory.created_at.desc(),
+            CaseHistory.id.desc(),
+        )
+        .all()
+    )
+
+    data = [
+        {
+            "id": history.id,
+            "caseId": history.case_id,
+            "action": history.action,
+            "oldValue": history.old_value,
+            "newValue": history.new_value,
+            "note": history.note,
+            "createdAt": history.created_at.isoformat(),
+        }
+        for history in histories
+    ]
+
+    return jsonify({
+        "success": True,
+        "data": data,
+        "message": "Lấy lịch sử hồ sơ thành công",
+        "errors": None,
+    }), 200
+
+
 @cases_bp.post("/cases")
 def create_case():
     payload = request.get_json(silent=True)
@@ -519,7 +636,15 @@ def create_case():
             if should_generate_case_code:
                 case.external_case_code = generate_case_code(now)
 
-            db.session.add(case)
+            history = CaseHistory(
+                case=case,
+                action=CaseHistory.CASE_CREATED,
+                old_value=None,
+                new_value=case.external_case_code or case.status,
+                note="Tạo hồ sơ",
+                created_at=now,
+            )
+            db.session.add_all([case, history])
             db.session.commit()
             break
         except CaseCodeSequenceExhaustedError:
@@ -588,7 +713,9 @@ def update_case(case_id):
         )
 
     now = datetime.now()
+    histories = build_update_histories(case, changes, now)
     synchronize_completed_at(case, changes, payload, now)
+    db.session.add_all(histories)
     apply_changes(case, changes)
     case.updated_at = now
 
