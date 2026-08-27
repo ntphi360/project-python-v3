@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -17,6 +17,7 @@ import {
   createCase,
   deleteCase,
   getCaseById,
+  getCaseHistory,
   getCases,
   updateCase,
 } from "../services/caseService";
@@ -29,6 +30,13 @@ import {
 import "./CasesPage.css";
 
 const PAGE_SIZE = 10;
+
+const caseHistoryActionLabels = {
+  CASE_CREATED: "Tạo hồ sơ",
+  STATUS_CHANGED: "Thay đổi trạng thái",
+  ASSIGNEE_CHANGED: "Thay đổi người xử lý",
+  STEP_CHANGED: "Thay đổi bước xử lý",
+};
 
 const caseStatuses = [
   "Mới tiếp nhận",
@@ -84,6 +92,37 @@ function formatDateTime(value) {
   if (!value) return "—";
   const [date, time = ""] = value.split("T");
   return `${formatDate(date)}${time ? ` ${time.slice(0, 5)}` : ""}`;
+}
+
+function getCaseHistoryLabel(action) {
+  return caseHistoryActionLabels[action] ?? action ?? "Cập nhật hồ sơ";
+}
+
+function getCaseHistoryDescription(historyItem) {
+  const label = getCaseHistoryLabel(historyItem.action);
+
+  if (historyItem.action === "CASE_CREATED") {
+    if (historyItem.note && historyItem.note !== label) {
+      return historyItem.note;
+    }
+
+    return historyItem.newValue
+      ? `Hồ sơ ${historyItem.newValue} được tạo`
+      : "";
+  }
+
+  const oldValue = historyItem.oldValue ?? "";
+  const newValue = historyItem.newValue ?? (
+    historyItem.action === "ASSIGNEE_CHANGED"
+      ? "Chưa phân công"
+      : "Chưa có"
+  );
+
+  if (oldValue || historyItem.newValue !== null) {
+    return `${oldValue} → ${newValue}`.trim();
+  }
+
+  return historyItem.note ?? "";
 }
 
 function toDateTimeLocal(value) {
@@ -486,30 +525,75 @@ function DeleteCaseModal({ caseItem, deleting, error, onClose, onConfirm }) {
   );
 }
 
-function CaseDetailModal({ caseItem, error, loading, onClose }) {
+function CaseDetailModal({
+  caseItem,
+  error,
+  history,
+  historyError,
+  historyLoading,
+  loading,
+  onClose,
+}) {
   return (
     <CaseModal onClose={onClose} title="Chi tiết hồ sơ">
       <div className="case-modal__body">
         {loading && <div className="cases-table__empty">Đang tải chi tiết hồ sơ...</div>}
         {!loading && error && <div className="cases-table__empty">{error}</div>}
         {!loading && !error && caseItem && (
-          <dl className="case-details">
-            <div className="case-details__item"><dt>Mã hồ sơ</dt><dd>{caseItem.caseCode ?? "—"}</dd></div>
-            <div className="case-details__item"><dt>Chủ hồ sơ</dt><dd>{caseItem.applicantName ?? "—"}</dd></div>
-            <div className="case-details__item"><dt>Số điện thoại</dt><dd>{caseItem.applicantPhone ?? "—"}</dd></div>
-            <div className="case-details__item"><dt>Đơn vị</dt><dd>{caseItem.agencyName ?? "—"}</dd></div>
-            <div className="case-details__item case-details__item--wide"><dt>Thủ tục hành chính</dt><dd>{caseItem.procedureName ?? "—"}</dd></div>
-            <div className="case-details__item"><dt>Phòng ban</dt><dd>{caseItem.departmentName ?? "—"}</dd></div>
-            <div className="case-details__item"><dt>Người xử lý</dt><dd>{caseItem.assigneeName ?? "—"}</dd></div>
-            <div className="case-details__item"><dt>Ngày tiếp nhận</dt><dd>{formatDateTime(caseItem.receivedAt)}</dd></div>
-            <div className="case-details__item case-details__item--appointment"><dt>Ngày hẹn trả</dt><dd>{formatDateTime(caseItem.appointmentDate)}</dd></div>
-            <div className="case-details__item"><dt>Hạn xử lý</dt><dd>{formatDateTime(caseItem.dueAt)}</dd></div>
-            <div className="case-details__item"><dt>Ngày hoàn thành</dt><dd>{formatDateTime(caseItem.completedAt)}</dd></div>
-            <div className="case-details__item"><dt>Trạng thái</dt><dd><StatusBadge status={caseItem.status} /></dd></div>
-            <div className="case-details__item"><dt>Ưu tiên</dt><dd>{caseItem.priority ?? "—"}</dd></div>
-            <div className="case-details__item"><dt>Bước hiện tại</dt><dd>{caseItem.currentStepName ?? "—"}</dd></div>
-            <div className="case-details__item"><dt>Nguồn dữ liệu</dt><dd>{caseItem.sourceType ?? "—"}</dd></div>
-          </dl>
+          <>
+            <dl className="case-details">
+              <div className="case-details__item"><dt>Mã hồ sơ</dt><dd>{caseItem.caseCode ?? "—"}</dd></div>
+              <div className="case-details__item"><dt>Chủ hồ sơ</dt><dd>{caseItem.applicantName ?? "—"}</dd></div>
+              <div className="case-details__item"><dt>Số điện thoại</dt><dd>{caseItem.applicantPhone ?? "—"}</dd></div>
+              <div className="case-details__item"><dt>Đơn vị</dt><dd>{caseItem.agencyName ?? "—"}</dd></div>
+              <div className="case-details__item case-details__item--wide"><dt>Thủ tục hành chính</dt><dd>{caseItem.procedureName ?? "—"}</dd></div>
+              <div className="case-details__item"><dt>Phòng ban</dt><dd>{caseItem.departmentName ?? "—"}</dd></div>
+              <div className="case-details__item"><dt>Người xử lý</dt><dd>{caseItem.assigneeName ?? "—"}</dd></div>
+              <div className="case-details__item"><dt>Ngày tiếp nhận</dt><dd>{formatDateTime(caseItem.receivedAt)}</dd></div>
+              <div className="case-details__item case-details__item--appointment"><dt>Ngày hẹn trả</dt><dd>{formatDateTime(caseItem.appointmentDate)}</dd></div>
+              <div className="case-details__item"><dt>Hạn xử lý</dt><dd>{formatDateTime(caseItem.dueAt)}</dd></div>
+              <div className="case-details__item"><dt>Ngày hoàn thành</dt><dd>{formatDateTime(caseItem.completedAt)}</dd></div>
+              <div className="case-details__item"><dt>Trạng thái</dt><dd><StatusBadge status={caseItem.status} /></dd></div>
+              <div className="case-details__item"><dt>Ưu tiên</dt><dd>{caseItem.priority ?? "—"}</dd></div>
+              <div className="case-details__item"><dt>Bước hiện tại</dt><dd>{caseItem.currentStepName ?? "—"}</dd></div>
+              <div className="case-details__item"><dt>Nguồn dữ liệu</dt><dd>{caseItem.sourceType ?? "—"}</dd></div>
+            </dl>
+
+            <section className="case-history">
+              <h3>LỊCH SỬ XỬ LÝ</h3>
+              {historyLoading && (
+                <p className="case-history__state">Đang tải lịch sử xử lý...</p>
+              )}
+              {!historyLoading && historyError && (
+                <p className="case-history__state case-history__state--error" role="status">
+                  {historyError}
+                </p>
+              )}
+              {!historyLoading && !historyError && !history.length && (
+                <p className="case-history__state">Chưa có lịch sử xử lý</p>
+              )}
+              {!historyLoading && !historyError && history.length > 0 && (
+                <ol>
+                  {history.map((historyItem) => {
+                    const description = getCaseHistoryDescription(historyItem);
+
+                    return (
+                      <li key={historyItem.id}>
+                        <span className="case-history__dot" aria-hidden="true" />
+                        <div>
+                          <time dateTime={historyItem.createdAt}>
+                            {formatDateTime(historyItem.createdAt)}
+                          </time>
+                          <strong>{getCaseHistoryLabel(historyItem.action)}</strong>
+                          {description && <small>{description}</small>}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+            </section>
+          </>
         )}
       </div>
     </CaseModal>
@@ -528,6 +612,10 @@ function CasesPage() {
   const [selectedCase, setSelectedCase] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState("");
+  const [caseHistory, setCaseHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
+  const detailRequestVersion = useRef(0);
   const [isAdding, setIsAdding] = useState(false);
   const [editingCase, setEditingCase] = useState(null);
   const [editLoadingId, setEditLoadingId] = useState(null);
@@ -563,16 +651,53 @@ function CasesPage() {
   }, [appliedFilters, currentPage, reloadVersion]);
 
   async function openCaseDetail(caseId) {
-    try {
-      setSelectedCase(null);
-      setDetailLoading(true);
-      setDetailError("");
-      setSelectedCase(await getCaseById(caseId));
-    } catch (requestError) {
-      setDetailError(getApiErrorMessage(requestError, "Không thể tải chi tiết hồ sơ."));
-    } finally {
-      setDetailLoading(false);
-    }
+    const requestVersion = detailRequestVersion.current + 1;
+    detailRequestVersion.current = requestVersion;
+    setSelectedCase(null);
+    setCaseHistory([]);
+    setDetailLoading(true);
+    setHistoryLoading(true);
+    setDetailError("");
+    setHistoryError("");
+
+    const detailRequest = getCaseById(caseId)
+      .then((caseData) => {
+        if (detailRequestVersion.current === requestVersion) {
+          setSelectedCase(caseData);
+        }
+      })
+      .catch((requestError) => {
+        if (detailRequestVersion.current === requestVersion) {
+          setDetailError(getApiErrorMessage(
+            requestError,
+            "Không thể tải chi tiết hồ sơ.",
+          ));
+        }
+      })
+      .finally(() => {
+        if (detailRequestVersion.current === requestVersion) {
+          setDetailLoading(false);
+        }
+      });
+
+    const historyRequest = getCaseHistory(caseId)
+      .then((historyData) => {
+        if (detailRequestVersion.current === requestVersion) {
+          setCaseHistory(historyData ?? []);
+        }
+      })
+      .catch(() => {
+        if (detailRequestVersion.current === requestVersion) {
+          setHistoryError("Không thể tải lịch sử xử lý");
+        }
+      })
+      .finally(() => {
+        if (detailRequestVersion.current === requestVersion) {
+          setHistoryLoading(false);
+        }
+      });
+
+    await Promise.allSettled([detailRequest, historyRequest]);
   }
 
   async function openEditCase(caseId) {
@@ -695,7 +820,25 @@ function CasesPage() {
         )}
       </article>
 
-      {(selectedCase || detailLoading || detailError) && <CaseDetailModal caseItem={selectedCase} error={detailError} loading={detailLoading} onClose={() => { setSelectedCase(null); setDetailError(""); setDetailLoading(false); }} />}
+      {(selectedCase || detailLoading || detailError) && (
+        <CaseDetailModal
+          caseItem={selectedCase}
+          error={detailError}
+          history={caseHistory}
+          historyError={historyError}
+          historyLoading={historyLoading}
+          loading={detailLoading}
+          onClose={() => {
+            detailRequestVersion.current += 1;
+            setSelectedCase(null);
+            setCaseHistory([]);
+            setDetailError("");
+            setHistoryError("");
+            setDetailLoading(false);
+            setHistoryLoading(false);
+          }}
+        />
+      )}
       {isAdding && <CaseFormModal onClose={() => setIsAdding(false)} onSubmit={handleCreate} />}
       {editingCase && <CaseFormModal initialCase={editingCase} onClose={() => setEditingCase(null)} onSubmit={handleUpdate} />}
       {deletingCase && <DeleteCaseModal caseItem={deletingCase} deleting={deleting} error={deleteError} onClose={() => { setDeletingCase(null); setDeleteError(""); }} onConfirm={handleDelete} />}

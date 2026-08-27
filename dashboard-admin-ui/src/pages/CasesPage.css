@@ -160,6 +160,8 @@
 .case-history strong { color: #42536c; font-size: 10.5px; }
 .case-history time { color: #8a97aa; font-size: 9px; }
 .case-history small { max-width: 520px; color: #718096; font-size: 9.5px; line-height: 1.45; }
+.case-history__state { margin: 0; padding: 10px 0; color: #8a97aa; font-size: 10px; }
+.case-history__state--error { color: #b85d10; }
 
 .case-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px 16px; }
 .case-form-grid__wide { grid-column: 1 / -1; }

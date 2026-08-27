@@ -28,6 +28,12 @@ export const getCaseById = async (id) => {
   return response.data.data;
 };
 
+export const getCaseHistory = async (id) => {
+  const response = await api.get(`/cases/${id}/history`);
+
+  return response.data.data;
+};
+
 export const createCase = async (data) => {
   const response = await api.post("/cases", data);
 
