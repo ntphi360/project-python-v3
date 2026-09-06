@@ -82,6 +82,52 @@ function formatDateTime(value) {
   return `${day}/${month}/${year}${time ? ` ${time.slice(0, 5)}` : ""}`;
 }
 
+function formatDate(value) {
+  if (!value) return "—";
+
+  const [year, month, day] = value.slice(0, 10).split("-");
+  if (!year || !month || !day) return "—";
+
+  return `${day}/${month}/${year}`;
+}
+
+function formatCountdown(dueAt, currentTime) {
+  const dueTime = new Date(dueAt).getTime();
+  if (!Number.isFinite(dueTime)) {
+    return { text: "—", tone: "upcoming" };
+  }
+
+  const difference = dueTime - currentTime;
+  const totalSeconds = Math.floor(Math.abs(difference) / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const pad = (value) => String(value).padStart(2, "0");
+  const parts = [];
+
+  if (days > 0) parts.push(`${pad(days)} ngày`);
+  parts.push(`${pad(hours)} giờ`);
+  parts.push(`${pad(minutes)} phút`);
+  parts.push(`${pad(seconds)} giây`);
+
+  const isOverdue = difference < 0;
+  return {
+    text: `${isOverdue ? "Quá hạn" : "Còn"} ${parts.join(" ")}`,
+    tone: isOverdue ? "overdue" : "upcoming",
+  };
+}
+
+function AlertCountdown({ dueAt, currentTime }) {
+  const countdown = formatCountdown(dueAt, currentTime);
+
+  return (
+    <span className={`alerts-countdown alerts-countdown--${countdown.tone}`}>
+      {countdown.text}
+    </span>
+  );
+}
+
 function getAlertKey(alertType) {
   return {
     NEAR_DUE: "upcoming",
@@ -289,7 +335,16 @@ function AlertsPage() {
   const [detailError, setDetailError] = useState("");
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
   const detailRequestVersion = useRef(0);
+
+  useEffect(() => {
+    const countdownInterval = window.setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(countdownInterval);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -476,9 +531,9 @@ function AlertsPage() {
                       <td>{caseItem.procedureName ?? "—"}</td>
                       <td>{caseItem.departmentName ?? "—"}</td>
                       <td>{caseItem.assigneeName ?? "Chưa phân công"}</td>
-                      <td>{formatDateTime(caseItem.dueAt)}</td>
-                      <td>{formatDateTime(caseItem.appointmentDate)}</td>
-                      <td className={`alerts-countdown alerts-countdown--${getAlertKey(caseItem.alertType)}`}>{caseItem.remainingText}</td>
+                      <td>{formatDate(caseItem.dueAt)}</td>
+                      <td>{formatDate(caseItem.appointmentDate)}</td>
+                      <td><AlertCountdown dueAt={caseItem.dueAt} currentTime={currentTime} /></td>
                       <td><AlertBadge alertType={caseItem.alertType} label={caseItem.alertLabel} /></td>
                       <td>
                         <div className="cases-row-actions">
