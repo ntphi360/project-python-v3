@@ -1,4 +1,5 @@
 from app.extensions import db
+from werkzeug.security import check_password_hash, generate_password_hash
 
 
 class User(db.Model):
@@ -8,6 +9,7 @@ class User(db.Model):
     username = db.Column("Username", db.Unicode(100))
     full_name = db.Column("FullName", db.Unicode(255))
     email = db.Column("Email", db.String(255))
+    password_hash = db.Column("PasswordHash", db.String(255))
     phone_number = db.Column("PhoneNumber", db.String(50))
 
     department_id = db.Column(
@@ -22,3 +24,18 @@ class User(db.Model):
     )
 
     is_active = db.Column("IsActive", db.Boolean)
+
+    def set_password(self, password):
+        if not isinstance(password, str) or not password:
+            raise ValueError("Mật khẩu không được để trống")
+
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        if not self.password_hash or not isinstance(password, str):
+            return False
+
+        try:
+            return check_password_hash(self.password_hash, password)
+        except ValueError:
+            return False

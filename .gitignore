@@ -115,6 +115,7 @@ activemq-data/
 # Python environments
 .env
 .env.*
+!backend/.env.example
 .envrc
 .venv/
 venv/
