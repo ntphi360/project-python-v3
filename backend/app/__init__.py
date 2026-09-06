@@ -14,6 +14,7 @@ from app.routes.imports import imports_bp
 from app.routes.dashboard import dashboard_bp
 from app.routes.alerts import alerts_bp
 from app.routes.catalogs import catalogs_bp
+from app.routes.notifications import notifications_bp
 
 
 
@@ -76,6 +77,11 @@ def create_app():
 
     app.register_blueprint(
         catalogs_bp,
+        url_prefix="/api/v1"
+    )
+
+    app.register_blueprint(
+        notifications_bp,
         url_prefix="/api/v1"
     )
 

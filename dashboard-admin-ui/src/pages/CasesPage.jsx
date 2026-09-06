@@ -27,6 +27,7 @@ import {
   getProcedures,
   getUsers,
 } from "../services/catalogService";
+import { getApiErrorMessage } from "../utils/apiError";
 import "./CasesPage.css";
 
 const PAGE_SIZE = 10;
@@ -129,19 +130,6 @@ function toDateTimeLocal(value) {
   return value ? value.slice(0, 16) : "";
 }
 
-function getApiErrorMessage(error, fallbackMessage) {
-  const payload = error?.response?.data;
-  if (!payload?.message) return fallbackMessage;
-
-  const details = payload.errors && typeof payload.errors === "object"
-    ? Object.values(payload.errors).filter((value) => typeof value === "string")
-    : [];
-
-  return details.length
-    ? `${payload.message}: ${details.join(" ")}`
-    : payload.message;
-}
-
 function getCaseFormValues(caseItem) {
   if (!caseItem) return { ...emptyCaseForm };
 
@@ -202,7 +190,7 @@ function StatusBadge({ status }) {
   );
 }
 
-function CaseModal({ children, onClose, title }) {
+export function CaseModal({ children, onClose, title }) {
   return (
     <div className="case-modal" role="presentation" onMouseDown={onClose}>
       <section
@@ -525,7 +513,7 @@ function DeleteCaseModal({ caseItem, deleting, error, onClose, onConfirm }) {
   );
 }
 
-function CaseDetailModal({
+export function CaseDetailModal({
   caseItem,
   error,
   history,

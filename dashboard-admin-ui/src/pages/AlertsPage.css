@@ -37,9 +37,14 @@
 .alert-badge--overdue { color: #df303b; background: #ffedef; }
 .alerts-remind-button { color: #d86708; }
 .alerts-remind-button:hover { background: #fff2df; }
+.alerts-remind-button:disabled { background: transparent; cursor: not-allowed; }
+.alerts-row--upcoming { background: #fffdf8; }
+.alerts-row--today { background: #fbfaff; }
+.alerts-row--overdue { background: #fffafb; }
 
 .alert-modal__dialog { width: min(790px, 100%); }
-.reminder-form { display: grid; gap: 16px; }
+.reminder-form { display: grid; }
+.reminder-form__body { display: grid; gap: 16px; }
 .reminder-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px 18px; margin: 0; }
 .reminder-details > div { min-width: 0; }
 .reminder-details dt { margin-bottom: 4px; color: #8a97aa; font-size: 9px; font-weight: 700; text-transform: uppercase; }
@@ -50,7 +55,7 @@
 .reminder-channels > div { display: flex; flex-wrap: wrap; gap: 9px 18px; margin-top: 10px; }
 .reminder-channels label { display: inline-flex; align-items: center; gap: 6px; color: #52627a; font-size: 10.5px; cursor: pointer; }
 .reminder-channels input { width: 14px; height: 14px; accent-color: #1269e8; }
-.reminder-channels__all { padding-bottom: 9px; border-bottom: 1px solid #edf1f6; font-weight: 650; }
+.reminder-channels .reminder-channels__all { display: flex; padding-bottom: 9px; border-bottom: 1px solid #edf1f6; font-weight: 650; }
 
 .reminder-message { display: flex; flex-direction: column; gap: 5px; }
 .reminder-message span { color: #52627a; font-size: 10px; font-weight: 650; }

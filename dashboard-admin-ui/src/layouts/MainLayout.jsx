@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   Bell,
   BellRing,
-  Building2,
   ChartNoAxesCombined,
   ChevronDown,
   ChevronRight,
@@ -11,11 +10,7 @@ import {
   Import,
   LayoutDashboard,
   Menu,
-  Search,
-  Settings,
   ShieldCheck,
-  Users,
-  Workflow,
 } from "lucide-react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 
@@ -138,10 +133,10 @@ function Header({ breadcrumbs, isMobileOpen, onToggleSidebar }) {
         {/*<button className="icon-button app-header__search" type="button" aria-label="Tìm kiếm">*/}
         {/*  <Search size={20} />*/}
         {/*</button>*/}
-        <button className="icon-button notification-button" type="button" aria-label="Thông báo">
+        <Link className="icon-button notification-button" to="/notifications" aria-label="Thông báo">
           <Bell size={20} />
           <span className="notification-button__dot" />
-        </button>
+        </Link>
 
         <div className="user-profile">
           <div className="user-profile__avatar" aria-hidden="true">NA</div>
