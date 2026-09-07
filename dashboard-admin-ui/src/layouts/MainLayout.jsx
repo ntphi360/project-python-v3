@@ -3,16 +3,20 @@ import {
   Bell,
   BellRing,
   ChartNoAxesCombined,
-  ChevronDown,
   ChevronRight,
   FileText,
   FolderKanban,
   Import,
   LayoutDashboard,
+  LogOut,
   Menu,
   ShieldCheck,
 } from "lucide-react";
-import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+
+import { sessionCleared } from "../features/auth/authSlice";
+import { logout as requestLogout } from "../services/authService";
 
 const menuItems = [
   { label: "Dashboard", path: "/", icon: LayoutDashboard },
@@ -113,7 +117,18 @@ function Breadcrumbs({ items }) {
   );
 }
 
-function Header({ breadcrumbs, isMobileOpen, onToggleSidebar }) {
+function getInitials(user) {
+  const displayName = user?.fullName || user?.username || "U";
+  return displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(-2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
+function Header({ breadcrumbs, isMobileOpen, logoutLoading, onLogout, onToggleSidebar, user }) {
   return (
     <header className="app-header">
       <div className="app-header__start">
@@ -139,12 +154,21 @@ function Header({ breadcrumbs, isMobileOpen, onToggleSidebar }) {
         </Link>
 
         <div className="user-profile">
-          <div className="user-profile__avatar" aria-hidden="true">NA</div>
+          <div className="user-profile__avatar" aria-hidden="true">{getInitials(user)}</div>
           <div className="user-profile__details">
-            <strong>Nguyễn Văn A</strong>
-            <span>ADMIN</span>
+            <strong>{user?.fullName || user?.username}</strong>
+            <span>{user?.email || user?.username}</span>
           </div>
-          <ChevronDown className="user-profile__chevron" size={16} />
+          <button
+            aria-label="Đăng xuất"
+            className="icon-button logout-button"
+            disabled={logoutLoading}
+            onClick={onLogout}
+            title="Đăng xuất"
+            type="button"
+          >
+            <LogOut size={17} />
+          </button>
         </div>
       </div>
     </header>
@@ -152,10 +176,14 @@ function Header({ breadcrumbs, isMobileOpen, onToggleSidebar }) {
 }
 
 function MainLayout() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const user = useSelector((state) => state.auth.user);
   const { pathname } = useLocation();
   const breadcrumbs = getBreadcrumbs(pathname);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
   function toggleSidebar() {
     if (window.matchMedia("(max-width: 760px)").matches) {
@@ -168,6 +196,18 @@ function MainLayout() {
 
   function closeMobileSidebar() {
     setIsMobileOpen(false);
+  }
+
+  async function handleLogout() {
+    if (logoutLoading) return;
+    setLogoutLoading(true);
+
+    try {
+      await requestLogout();
+    } finally {
+      dispatch(sessionCleared());
+      navigate("/login", { replace: true });
+    }
   }
 
   return (
@@ -193,7 +233,10 @@ function MainLayout() {
         <Header
           breadcrumbs={breadcrumbs}
           isMobileOpen={isMobileOpen}
+          logoutLoading={logoutLoading}
+          onLogout={handleLogout}
           onToggleSidebar={toggleSidebar}
+          user={user}
         />
         <main className="main-content">
           <Outlet />

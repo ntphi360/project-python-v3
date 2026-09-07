@@ -31,6 +31,22 @@ button {
   min-height: 100vh;
 }
 
+.auth-splash {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #52627d;
+  background: #f8fafc;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.auth-splash__spinner {
+  color: #1269e8;
+}
+
 .main-layout {
   display: flex;
   min-height: 100vh;
@@ -319,6 +335,17 @@ button {
 
 .user-profile__chevron {
   color: #718096;
+}
+
+.logout-button {
+  width: 32px;
+  height: 32px;
+  margin-left: 1px;
+}
+
+.logout-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .main-content {

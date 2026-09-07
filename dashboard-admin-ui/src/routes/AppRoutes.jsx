@@ -7,26 +7,34 @@ import AlertsPage from "../pages/AlertsPage";
 import NotificationsPage from "../pages/NotificationsPage";
 import ReportsPage from "../pages/ReportsPage";
 import ImportPage from "../pages/ImportPage";
+import LoginPage from "../pages/LoginPage";
+import { ProtectedRoute, PublicOnlyRoute } from "./AuthRoutes";
 
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<MainLayout />}>
-        <Route index element={<DashboardPage />} />
+      <Route element={<PublicOnlyRoute />}>
+        <Route path="/login" element={<LoginPage />} />
+      </Route>
 
-        <Route path="cases" element={<CasesPage />} />
-        <Route path="cases/:id" element={<CasesPage />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/" element={<MainLayout />}>
+          <Route index element={<DashboardPage />} />
 
-        <Route path="alerts" element={<AlertsPage />} />
+          <Route path="cases" element={<CasesPage />} />
+          <Route path="cases/:id" element={<CasesPage />} />
 
-        <Route
-          path="notifications"
-          element={<NotificationsPage />}
-        />
+          <Route path="alerts" element={<AlertsPage />} />
 
-        <Route path="reports" element={<ReportsPage />} />
+          <Route
+            path="notifications"
+            element={<NotificationsPage />}
+          />
 
-        <Route path="import" element={<ImportPage />} />
+          <Route path="reports" element={<ReportsPage />} />
+
+          <Route path="import" element={<ImportPage />} />
+        </Route>
       </Route>
     </Routes>
   );
