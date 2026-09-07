@@ -134,9 +134,13 @@ def create_app():
         JWT_TOKEN_LOCATION=["headers", "cookies"],
         JWT_COOKIE_SECURE=cookie_secure,
         JWT_COOKIE_SAMESITE=cookie_samesite,
+        JWT_REFRESH_COOKIE_NAME="refresh_token_cookie",
         JWT_REFRESH_COOKIE_PATH="/api/auth",
         JWT_COOKIE_CSRF_PROTECT=True,
         JWT_CSRF_IN_COOKIES=True,
+        JWT_REFRESH_CSRF_COOKIE_NAME="csrf_refresh_token",
+        JWT_REFRESH_CSRF_COOKIE_PATH="/",
+        JWT_REFRESH_CSRF_HEADER_NAME="X-CSRF-TOKEN",
         JWT_SESSION_COOKIE=False,
     )
 

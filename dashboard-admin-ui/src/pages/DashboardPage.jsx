@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { API_BASE_URL } from "../config/api";
 import { Link } from "react-router-dom";
+import { getDashboard } from "../services/dashboardService";
 import "./DashboardPage.css";
 
 import {
@@ -92,17 +92,7 @@ function DashboardPage() {
         setLoading(true);
         setError(null);
 
-      const response = await fetch(
-    `${API_BASE_URL}/dashboard`
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Dashboard API error: ${response.status}`
-          );
-        }
-
-        const result = await response.json();
+        const result = await getDashboard();
 
         if (!result.success) {
           throw new Error(
