@@ -2,15 +2,14 @@ from flask import Blueprint, jsonify, make_response, request
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
-    get_jwt_identity,
     jwt_required,
     set_refresh_cookies,
     unset_refresh_cookies,
 )
 from sqlalchemy import func
 
-from app.extensions import db
 from app.models.user import User
+from app.utils.authorization import load_current_user
 
 
 auth_bp = Blueprint("auth", __name__)
@@ -41,17 +40,9 @@ def serialize_user(user):
         "fullName": user.full_name,
         "email": user.email,
         "departmentId": user.department_id,
+        "role": user.role,
         "isActive": user.is_active,
     }
-
-
-def get_identity_user():
-    try:
-        user_id = int(get_jwt_identity())
-    except (TypeError, ValueError):
-        return None
-
-    return db.session.get(User, user_id)
 
 
 def register_jwt_error_handlers(jwt):
@@ -148,7 +139,7 @@ def login():
 @auth_bp.post("/refresh")
 @jwt_required(refresh=True, locations=["cookies"])
 def refresh_access_token():
-    user = get_identity_user()
+    user = load_current_user()
     if not user:
         return error_response("Tài khoản không còn tồn tại", 401)
 
@@ -177,7 +168,7 @@ def logout():
 @auth_bp.get("/me")
 @jwt_required(locations=["headers"])
 def get_current_user():
-    user = get_identity_user()
+    user = load_current_user()
     if not user:
         return error_response("Tài khoản không còn tồn tại", 401)
 

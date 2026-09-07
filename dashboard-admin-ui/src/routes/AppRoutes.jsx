@@ -8,6 +8,8 @@ import NotificationsPage from "../pages/NotificationsPage";
 import ReportsPage from "../pages/ReportsPage";
 import ImportPage from "../pages/ImportPage";
 import LoginPage from "../pages/LoginPage";
+import AccessDeniedPage from "../pages/AccessDeniedPage";
+import { MANAGEMENT_ROLES, USER_ROLES } from "../constants/roles";
 import { ProtectedRoute, PublicOnlyRoute } from "./AuthRoutes";
 
 function AppRoutes() {
@@ -24,16 +26,21 @@ function AppRoutes() {
           <Route path="cases" element={<CasesPage />} />
           <Route path="cases/:id" element={<CasesPage />} />
 
-          <Route path="alerts" element={<AlertsPage />} />
-
           <Route
             path="notifications"
             element={<NotificationsPage />}
           />
 
-          <Route path="reports" element={<ReportsPage />} />
+          <Route element={<ProtectedRoute allowedRoles={MANAGEMENT_ROLES} />}>
+            <Route path="alerts" element={<AlertsPage />} />
+            <Route path="reports" element={<ReportsPage />} />
+          </Route>
 
-          <Route path="import" element={<ImportPage />} />
+          <Route element={<ProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} />}>
+            <Route path="import" element={<ImportPage />} />
+          </Route>
+
+          <Route path="403" element={<AccessDeniedPage />} />
         </Route>
       </Route>
     </Routes>

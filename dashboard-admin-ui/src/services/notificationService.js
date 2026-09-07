@@ -2,25 +2,18 @@ import api from "./api";
 
 
 export const getNotifications = async (
-  receiverUserId,
   page = 1,
   pageSize = 20
 ) => {
   const response = await api.get("/notifications", {
-    params: { receiverUserId, page, pageSize },
+    params: { page, pageSize },
   });
 
   return response.data.data;
 };
 
-export const markNotificationRead = async (
-  notificationId,
-  receiverUserId
-) => {
-  const response = await api.patch(
-    `/notifications/${notificationId}/read`,
-    { receiverUserId }
-  );
+export const markNotificationRead = async (notificationId) => {
+  const response = await api.patch(`/notifications/${notificationId}/read`);
 
   return response.data.data;
 };

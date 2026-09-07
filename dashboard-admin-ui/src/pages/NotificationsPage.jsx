@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Bell, Check, LoaderCircle } from "lucide-react";
-import { useSelector } from "react-redux";
 
 import {
   getNotifications,
@@ -19,25 +18,19 @@ function formatDateTime(value) {
 }
 
 function NotificationsPage() {
-  const currentUser = useSelector((state) => state.auth.user);
-  const receiverUserId = currentUser?.id ?? currentUser?.userId;
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(Boolean(receiverUserId));
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [markingId, setMarkingId] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    if (!receiverUserId) {
-      return undefined;
-    }
-
     async function fetchNotifications() {
       try {
         setLoading(true);
         setError("");
-        const data = await getNotifications(receiverUserId);
+        const data = await getNotifications();
         if (!cancelled) setItems(data?.items ?? []);
       } catch (requestError) {
         if (!cancelled) {
@@ -53,13 +46,13 @@ function NotificationsPage() {
 
     fetchNotifications();
     return () => { cancelled = true; };
-  }, [receiverUserId]);
+  }, []);
 
   async function handleMarkRead(notificationId) {
     try {
       setMarkingId(notificationId);
       setError("");
-      await markNotificationRead(notificationId, receiverUserId);
+      await markNotificationRead(notificationId);
       setItems((current) => current.map((item) => (
         item.id === notificationId
           ? { ...item, isRead: true }
@@ -82,18 +75,13 @@ function NotificationsPage() {
         <p>Các nhắc nhở xử lý hồ sơ dành cho bạn.</p>
       </div>
 
-      {!receiverUserId && (
-        <div className="notifications-state">
-          Chưa xác định người dùng đăng nhập. Danh sách sẽ được tải khi hệ thống xác thực cung cấp user ID.
-        </div>
-      )}
       {loading && <div className="notifications-state">Đang tải thông báo...</div>}
       {!loading && error && <div className="notifications-state notifications-state--error" role="alert">{error}</div>}
-      {!loading && !error && receiverUserId && !items.length && (
+      {!loading && !error && !items.length && (
         <div className="notifications-state">Bạn chưa có thông báo.</div>
       )}
 
-      {!loading && receiverUserId && items.length > 0 && (
+      {!loading && items.length > 0 && (
         <div className="notifications-list">
           {items.map((item) => (
             <article className={`notification-item${item.isRead ? " notification-item--read" : ""}`} key={item.id}>

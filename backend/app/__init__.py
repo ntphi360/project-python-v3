@@ -10,6 +10,7 @@ from flask_migrate import upgrade
 from app.extensions import db
 from app.extensions import jwt
 from app.extensions import migrate
+from app.cli import register_cli_commands
 from app.routes.auth import auth_bp, register_jwt_error_handlers
 from app.routes.health import health_bp
 from app.routes.cases import cases_bp
@@ -143,6 +144,7 @@ def create_app():
     migrate.init_app(app, db)  # Migrate schema database
     jwt.init_app(app)
     register_jwt_error_handlers(jwt)
+    register_cli_commands(app)
     with app.app_context():
         upgrade()
 

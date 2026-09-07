@@ -2,14 +2,29 @@ from app.extensions import db
 from werkzeug.security import check_password_hash, generate_password_hash
 
 
+class UserRole:
+    ADMIN = "ADMIN"
+    MANAGER = "MANAGER"
+    OFFICER = "OFFICER"
+
+    ALL = {ADMIN, MANAGER, OFFICER}
+
+
 class User(db.Model):
     __tablename__ = "Users"
+    __table_args__ = (
+        db.CheckConstraint(
+            "[Role] IS NULL OR [Role] IN ('ADMIN', 'MANAGER', 'OFFICER')",
+            name="CK_Users_Role",
+        ),
+    )
 
     id = db.Column("Id", db.Integer, primary_key=True)
     username = db.Column("Username", db.Unicode(100))
     full_name = db.Column("FullName", db.Unicode(255))
     email = db.Column("Email", db.String(255))
     password_hash = db.Column("PasswordHash", db.String(255))
+    role = db.Column("Role", db.String(20), nullable=True)
     phone_number = db.Column("PhoneNumber", db.String(50))
 
     department_id = db.Column(

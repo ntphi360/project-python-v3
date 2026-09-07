@@ -14,7 +14,9 @@ import {
   TriangleAlert,
   X,
 } from "lucide-react";
+import { useSelector } from "react-redux";
 
+import { MANAGEMENT_ROLES } from "../constants/roles";
 import {
   getCaseById,
   getCaseHistory,
@@ -319,6 +321,8 @@ function ReminderModal({ caseItem, onClose, onSent }) {
 }
 
 function AlertsPage() {
+  const role = useSelector((state) => state.auth.user?.role);
+  const canSendReminder = MANAGEMENT_ROLES.includes(role);
   const [alertCases, setAlertCases] = useState([]);
   const [summary, setSummary] = useState(emptySummary);
   const [pagination, setPagination] = useState(emptyPagination);
@@ -538,7 +542,9 @@ function AlertsPage() {
                       <td>
                         <div className="cases-row-actions">
                           <button aria-label={`Xem ${caseItem.caseCode}`} className="cases-action-button" title="Chi tiết" type="button" onClick={() => openCaseDetail(caseItem.caseId)}><Eye size={14} /></button>
-                          <button aria-label={`Gửi nhắc nhở ${caseItem.caseCode}`} className="cases-action-button alerts-remind-button" disabled={!caseItem.assigneeId} title={caseItem.assigneeId ? "Gửi nhắc nhở" : "Hồ sơ chưa có người xử lý"} type="button" onClick={() => { setFeedback(null); setReminderCase(caseItem); }}><Send size={14} /></button>
+                          {canSendReminder && (
+                            <button aria-label={`Gửi nhắc nhở ${caseItem.caseCode}`} className="cases-action-button alerts-remind-button" disabled={!caseItem.assigneeId} title={caseItem.assigneeId ? "Gửi nhắc nhở" : "Hồ sơ chưa có người xử lý"} type="button" onClick={() => { setFeedback(null); setReminderCase(caseItem); }}><Send size={14} /></button>
+                          )}
                         </div>
                       </td>
                     </tr>

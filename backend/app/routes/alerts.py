@@ -1,6 +1,6 @@
 from math import ceil
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, current_app, g, jsonify, request
 from sqlalchemy import or_
 
 from app.extensions import db
@@ -8,13 +8,14 @@ from app.models.case import Case
 from app.models.department import Department
 from app.models.notification import Notification
 from app.models.procedure import Procedure
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.services.alert_service import (
     ALERT_LABELS,
     active_alert_query,
     build_alert_item,
     current_time,
 )
+from app.utils.authorization import require_roles
 
 
 alerts_bp = Blueprint("alerts", __name__)
@@ -48,6 +49,7 @@ def parse_positive_integer(name, default, maximum=None):
 
 
 @alerts_bp.get("/alerts")
+@require_roles(UserRole.ADMIN, UserRole.MANAGER)
 def get_alerts():
     page, page_error = parse_positive_integer("page", 1)
     page_size, page_size_error = parse_positive_integer(
@@ -151,6 +153,7 @@ def get_alerts():
 
 
 @alerts_bp.post("/alerts/<int:case_id>/remind")
+@require_roles(UserRole.ADMIN, UserRole.MANAGER)
 def send_case_reminder(case_id):
     payload = request.get_json(silent=True)
     if not isinstance(payload, dict):
@@ -227,7 +230,7 @@ def send_case_reminder(case_id):
     if "SYSTEM" in channels:
         notification = Notification(
             receiver_user_id=case.current_assignee_id,
-            sender_user_id=None,
+            sender_user_id=g.current_user.id,
             case_id=case.id,
             type=Notification.CASE_REMINDER,
             title="Nhắc nhở xử lý hồ sơ",

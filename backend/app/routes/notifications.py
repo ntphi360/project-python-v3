@@ -1,8 +1,8 @@
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, current_app, g, jsonify, request
 
 from app.extensions import db
 from app.models.notification import Notification
-from app.models.user import User
+from app.utils.authorization import authenticated_user_required
 
 
 notifications_bp = Blueprint("notifications", __name__)
@@ -54,10 +54,8 @@ def serialize_notification(notification):
 
 
 @notifications_bp.get("/notifications")
+@authenticated_user_required
 def get_notifications():
-    receiver_user_id, receiver_error = parse_positive_integer(
-        "receiverUserId"
-    )
     page, page_error = parse_positive_integer("page", 1)
     page_size, page_size_error = parse_positive_integer(
         "pageSize",
@@ -66,10 +64,6 @@ def get_notifications():
     )
 
     errors = {}
-    if receiver_error or receiver_user_id is None:
-        errors["receiverUserId"] = (
-            receiver_error or "receiverUserId là bắt buộc"
-        )
     if page_error:
         errors["page"] = page_error
     if page_size_error:
@@ -90,15 +84,8 @@ def get_notifications():
             errors,
         )
 
-    if db.session.get(User, receiver_user_id) is None:
-        return error_response(
-            "Không tìm thấy người nhận thông báo",
-            404,
-            {"receiverUserId": receiver_user_id},
-        )
-
     query = Notification.query.filter(
-        Notification.receiver_user_id == receiver_user_id
+        Notification.receiver_user_id == g.current_user.id
     )
     if parsed_is_read is not None:
         query = query.filter(Notification.is_read == parsed_is_read)
@@ -134,24 +121,12 @@ def get_notifications():
 
 
 @notifications_bp.patch("/notifications/<int:notification_id>/read")
+@authenticated_user_required
 def mark_notification_read(notification_id):
-    payload = request.get_json(silent=True)
-    receiver_user_id = (
-        payload.get("receiverUserId")
-        if isinstance(payload, dict)
-        else None
-    )
-    if isinstance(receiver_user_id, bool) or not isinstance(receiver_user_id, int):
-        return error_response(
-            "Dữ liệu thông báo không hợp lệ",
-            400,
-            {"receiverUserId": "receiverUserId là bắt buộc"},
-        )
-
     notification = db.session.get(Notification, notification_id)
     if (
         not notification
-        or notification.receiver_user_id != receiver_user_id
+        or notification.receiver_user_id != g.current_user.id
     ):
         return error_response("Không tìm thấy thông báo", 404)
 

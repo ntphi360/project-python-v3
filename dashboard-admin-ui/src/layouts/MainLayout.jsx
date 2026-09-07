@@ -15,16 +15,32 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
+import { MANAGEMENT_ROLES, USER_ROLES } from "../constants/roles";
 import { sessionCleared } from "../features/auth/authSlice";
 import { logout as requestLogout } from "../services/authService";
 
 const menuItems = [
   { label: "Dashboard", path: "/", icon: LayoutDashboard },
   { label: "Hồ sơ", path: "/cases", icon: FolderKanban },
-  { label: "Cảnh báo", path: "/alerts", icon: BellRing },
-  // { label: "Thông báo", path: "/notifications", icon: Bell },
-  { label: "Thống kê & Báo cáo", path: "/reports", icon: ChartNoAxesCombined },
-  { label: "Import dữ liệu", path: "/import", icon: Import },
+  {
+    label: "Cảnh báo",
+    path: "/alerts",
+    icon: BellRing,
+    allowedRoles: MANAGEMENT_ROLES,
+  },
+  { label: "Thông báo", path: "/notifications", icon: Bell },
+  {
+    label: "Thống kê & Báo cáo",
+    path: "/reports",
+    icon: ChartNoAxesCombined,
+    allowedRoles: MANAGEMENT_ROLES,
+  },
+  {
+    label: "Import dữ liệu",
+    path: "/import",
+    icon: Import,
+    allowedRoles: [USER_ROLES.ADMIN],
+  },
   // { label: "Người dùng", path: "/users", icon: Users },
   // { label: "Phòng ban", path: "/departments", icon: Building2 },
   // { label: "Thủ tục", path: "/procedures", icon: Workflow },
@@ -38,6 +54,7 @@ const pageTitles = {
   "/notifications": "Thông báo",
   "/reports": "Thống kê & Báo cáo",
   "/import": "Import dữ liệu",
+  "/403": "Không có quyền truy cập",
   "/users": "Người dùng",
   "/departments": "Phòng ban",
   "/procedures": "Thủ tục",
@@ -58,7 +75,7 @@ function getBreadcrumbs(pathname) {
   });
 }
 
-function Sidebar({ isCollapsed, isMobileOpen, onNavigate }) {
+function Sidebar({ isCollapsed, isMobileOpen, onNavigate, role }) {
   return (
     <aside
       className={`sidebar${isMobileOpen ? " sidebar--mobile-open" : ""}`}
@@ -76,21 +93,25 @@ function Sidebar({ isCollapsed, isMobileOpen, onNavigate }) {
       </div>
 
       <nav className="sidebar__nav" aria-label="Điều hướng chính">
-        {menuItems.map(({ label, path, icon: Icon }) => (
-          <NavLink
-            className={({ isActive }) =>
-              `sidebar__link${isActive ? " sidebar__link--active" : ""}`
-            }
-            end={path === "/"}
-            key={path}
-            onClick={onNavigate}
-            title={isCollapsed ? label : undefined}
-            to={path}
-          >
-            <Icon className="sidebar__link-icon" size={19} strokeWidth={1.8} />
-            <span>{label}</span>
-          </NavLink>
-        ))}
+        {menuItems
+          .filter(({ allowedRoles }) => (
+            !allowedRoles || allowedRoles.includes(role)
+          ))
+          .map(({ label, path, icon: Icon }) => (
+            <NavLink
+              className={({ isActive }) =>
+                `sidebar__link${isActive ? " sidebar__link--active" : ""}`
+              }
+              end={path === "/"}
+              key={path}
+              onClick={onNavigate}
+              title={isCollapsed ? label : undefined}
+              to={path}
+            >
+              <Icon className="sidebar__link-icon" size={19} strokeWidth={1.8} />
+              <span>{label}</span>
+            </NavLink>
+          ))}
       </nav>
     </aside>
   );
@@ -220,6 +241,7 @@ function MainLayout() {
         isCollapsed={isCollapsed}
         isMobileOpen={isMobileOpen}
         onNavigate={closeMobileSidebar}
+        role={user?.role}
       />
       {isMobileOpen && (
         <button

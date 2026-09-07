@@ -5,12 +5,14 @@ from sqlalchemy import func
 
 from app.extensions import db
 from app.models.case import Case
+from app.utils.authorization import authenticated_user_required
 
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
 
 @dashboard_bp.get("/dashboard")
+@authenticated_user_required
 def get_dashboard():
     now = datetime.now()
     upcoming_limit = now + timedelta(days=3)

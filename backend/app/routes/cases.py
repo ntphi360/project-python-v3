@@ -13,6 +13,7 @@ from app.services.case_code_service import (
     CaseCodeSequenceExhaustedError,
     generate_case_code,
 )
+from app.utils.authorization import authenticated_user_required
 
 
 cases_bp = Blueprint("cases", __name__)
@@ -249,6 +250,7 @@ def build_update_histories(case, changes, now):
 
 
 @cases_bp.get("/cases")
+@authenticated_user_required
 def get_cases():
     page = request.args.get(
         "page",
@@ -453,6 +455,7 @@ def get_cases():
     }), 200
 
 @cases_bp.get("/cases/<int:case_id>")
+@authenticated_user_required
 def get_case_detail(case_id):
     case = Case.query.get(case_id)
 
@@ -552,6 +555,7 @@ def get_case_detail(case_id):
 
 
 @cases_bp.get("/cases/<int:case_id>/history")
+@authenticated_user_required
 def get_case_history(case_id):
     if db.session.get(Case, case_id) is None:
         return error_response(
@@ -592,6 +596,7 @@ def get_case_history(case_id):
 
 
 @cases_bp.post("/cases")
+@authenticated_user_required
 def create_case():
     payload = request.get_json(silent=True)
 
@@ -684,6 +689,7 @@ def create_case():
 
 
 @cases_bp.put("/cases/<int:case_id>")
+@authenticated_user_required
 def update_case(case_id):
     case = db.session.get(Case, case_id)
 
@@ -744,6 +750,7 @@ def update_case(case_id):
 
 
 @cases_bp.delete("/cases/<int:case_id>")
+@authenticated_user_required
 def delete_case(case_id):
     case = db.session.get(Case, case_id)
 

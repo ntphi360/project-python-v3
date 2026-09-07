@@ -1,6 +1,8 @@
 from flask import Blueprint, request
 
+from app.models.user import UserRole
 from app.services.import_service import import_case_file
+from app.utils.authorization import require_roles
 
 imports_bp = Blueprint(
     "imports",
@@ -8,6 +10,7 @@ imports_bp = Blueprint(
 )
 
 @imports_bp.post("/import/cases")
+@require_roles(UserRole.ADMIN)
 def import_cases():
     file = request.files.get("file")
 

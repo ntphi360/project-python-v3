@@ -7,6 +7,7 @@ from app.models.department import Department
 from app.models.procedure import Procedure
 from app.models.procedure_field import ProcedureField
 from app.models.user import User
+from app.utils.authorization import authenticated_user_required
 
 
 catalogs_bp = Blueprint("catalogs", __name__)
@@ -42,6 +43,7 @@ def database_error_response(resource_name):
 
 
 @catalogs_bp.get("/procedures")
+@authenticated_user_required
 def get_procedures():
     try:
         rows = (
@@ -78,6 +80,7 @@ def get_procedures():
 
 
 @catalogs_bp.get("/procedure-fields")
+@authenticated_user_required
 def get_procedure_fields():
     try:
         rows = (
@@ -106,6 +109,7 @@ def get_procedure_fields():
 
 
 @catalogs_bp.get("/departments")
+@authenticated_user_required
 def get_departments():
     try:
         rows = (
@@ -134,6 +138,7 @@ def get_departments():
 
 
 @catalogs_bp.get("/agencies")
+@authenticated_user_required
 def get_agencies():
     try:
         rows = (
@@ -176,6 +181,7 @@ def parse_department_id():
 
 
 @catalogs_bp.get("/users")
+@authenticated_user_required
 def get_users():
     department_id, validation_error = parse_department_id()
 
