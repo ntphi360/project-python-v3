@@ -1,0 +1,22 @@
+.users-page { color: #172554; }
+.users-page__heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.users-page__heading h1 { margin: 0; font-size: 20px; }
+.users-page__heading p { margin: 5px 0 0; color: #718096; font-size: 11px; }
+.users-filter-card { grid-template-columns: minmax(230px, 1.5fr) repeat(3, minmax(140px, 1fr)) auto; }
+.users-table { min-width: 1120px; }
+.user-role-badge, .user-status-badge { display: inline-flex; min-height: 22px; align-items: center; padding: 0 8px; border-radius: 999px; font-size: 9px; font-weight: 750; }
+.user-role-badge--admin { color: #7c3aed; background: #f3e8ff; }
+.user-role-badge--manager { color: #1768dc; background: #eaf2ff; }
+.user-role-badge--officer { color: #52627a; background: #edf1f6; }
+.user-role-badge--none { color: #8a5b13; background: #fff5d8; }
+.user-status-badge--active { color: #167849; background: #eaf8f1; }
+.user-status-badge--inactive { color: #c92f39; background: #fff2f3; }
+.user-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.user-form-grid label, .user-password-form label { display: flex; flex-direction: column; gap: 6px; color: #52627a; font-size: 10.5px; font-weight: 650; }
+.user-form-grid input, .user-form-grid select, .user-password-form input { width: 100%; height: 38px; padding: 0 10px; color: #24385d; background: #fff; border: 1px solid #dce4ee; border-radius: 7px; outline: none; }
+.user-form-grid input:focus, .user-form-grid select:focus, .user-password-form input:focus { border-color: #4f8ee8; box-shadow: 0 0 0 3px rgba(45, 116, 218, .1); }
+.user-password-form { display: flex; flex-direction: column; gap: 13px; }
+.user-password-form > p { margin: 0 0 2px; color: #52627a; font-size: 11px; }
+.user-form-error { grid-column: 1 / -1; margin: 0; padding: 9px 10px; color: #c92f39; background: #fff2f3; border: 1px solid #f3cdd1; border-radius: 7px; font-size: 10.5px; }
+@media (max-width: 1100px) { .users-filter-card { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .users-filter-card, .user-form-grid { grid-template-columns: 1fr; } .users-page__heading { flex-direction: column; } }

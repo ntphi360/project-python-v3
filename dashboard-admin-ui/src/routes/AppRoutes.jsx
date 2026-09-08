@@ -9,6 +9,7 @@ import ReportsPage from "../pages/ReportsPage";
 import ImportPage from "../pages/ImportPage";
 import LoginPage from "../pages/LoginPage";
 import AccessDeniedPage from "../pages/AccessDeniedPage";
+import UserManagementPage from "../pages/UserManagementPage";
 import { MANAGEMENT_ROLES, USER_ROLES } from "../constants/roles";
 import { ProtectedRoute, PublicOnlyRoute } from "./AuthRoutes";
 
@@ -38,6 +39,7 @@ function AppRoutes() {
 
           <Route element={<ProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} />}>
             <Route path="import" element={<ImportPage />} />
+            <Route path="users" element={<UserManagementPage />} />
           </Route>
 
           <Route path="403" element={<AccessDeniedPage />} />

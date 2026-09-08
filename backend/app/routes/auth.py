@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, make_response, request
+from flask import Blueprint, current_app, g, jsonify, make_response, request
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -7,12 +7,16 @@ from flask_jwt_extended import (
     unset_refresh_cookies,
 )
 from sqlalchemy import func
+from sqlalchemy.exc import SQLAlchemyError
 
+from app.extensions import db
 from app.models.user import User
-from app.utils.authorization import load_current_user
+from app.utils.authorization import authenticated_user_required, load_current_user
 
 
 auth_bp = Blueprint("auth", __name__)
+PASSWORD_MIN_LENGTH = 8
+PASSWORD_MAX_LENGTH = 1024
 
 
 def success_response(data, message, status_code=200):
@@ -179,3 +183,54 @@ def get_current_user():
         serialize_user(user),
         "Lấy thông tin người dùng thành công",
     )
+
+
+@auth_bp.post("/change-password")
+@authenticated_user_required
+def change_password():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return error_response("Dữ liệu JSON không hợp lệ", 400)
+
+    current_password = payload.get("currentPassword")
+    new_password = payload.get("newPassword")
+    confirm_password = payload.get("confirmPassword")
+    validation_errors = {}
+
+    if not isinstance(current_password, str) or not current_password:
+        validation_errors["currentPassword"] = "Mật khẩu hiện tại là bắt buộc"
+    if not isinstance(new_password, str) or not new_password:
+        validation_errors["newPassword"] = "Mật khẩu mới là bắt buộc"
+    elif len(new_password) < PASSWORD_MIN_LENGTH:
+        validation_errors["newPassword"] = (
+            f"Mật khẩu mới phải có ít nhất {PASSWORD_MIN_LENGTH} ký tự"
+        )
+    elif len(new_password) > PASSWORD_MAX_LENGTH:
+        validation_errors["newPassword"] = (
+            f"Mật khẩu mới không vượt quá {PASSWORD_MAX_LENGTH} ký tự"
+        )
+    if not isinstance(confirm_password, str) or confirm_password != new_password:
+        validation_errors["confirmPassword"] = "Xác nhận mật khẩu không khớp"
+
+    if validation_errors:
+        return error_response(
+            "Thông tin đổi mật khẩu không hợp lệ",
+            400,
+            validation_errors,
+        )
+    if not g.current_user.check_password(current_password):
+        return error_response(
+            "Mật khẩu hiện tại không chính xác",
+            400,
+            {"currentPassword": "Mật khẩu hiện tại không chính xác"},
+        )
+
+    g.current_user.set_password(new_password)
+    try:
+        db.session.commit()
+    except SQLAlchemyError:
+        db.session.rollback()
+        current_app.logger.exception("Không thể đổi mật khẩu người dùng")
+        return error_response("Không thể đổi mật khẩu", 500)
+
+    return success_response(None, "Đổi mật khẩu thành công")

@@ -180,9 +180,9 @@ def parse_department_id():
     return department_id, None
 
 
-@catalogs_bp.get("/users")
+@catalogs_bp.get("/user-options")
 @authenticated_user_required
-def get_users():
+def get_user_options():
     department_id, validation_error = parse_department_id()
 
     if validation_error:

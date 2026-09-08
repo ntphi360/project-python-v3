@@ -7,15 +7,18 @@ import {
   FileText,
   FolderKanban,
   Import,
+  KeyRound,
   LayoutDashboard,
   LogOut,
   Menu,
   ShieldCheck,
+  UsersRound,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { MANAGEMENT_ROLES, USER_ROLES } from "../constants/roles";
+import ChangePasswordModal from "../components/ChangePasswordModal";
 import { sessionCleared } from "../features/auth/authSlice";
 import { logout as requestLogout } from "../services/authService";
 
@@ -41,7 +44,12 @@ const menuItems = [
     icon: Import,
     allowedRoles: [USER_ROLES.ADMIN],
   },
-  // { label: "Người dùng", path: "/users", icon: Users },
+  {
+    label: "Quản lý người dùng",
+    path: "/users",
+    icon: UsersRound,
+    allowedRoles: [USER_ROLES.ADMIN],
+  },
   // { label: "Phòng ban", path: "/departments", icon: Building2 },
   // { label: "Thủ tục", path: "/procedures", icon: Workflow },
   // { label: "Cài đặt", path: "/settings", icon: Settings },
@@ -55,7 +63,7 @@ const pageTitles = {
   "/reports": "Thống kê & Báo cáo",
   "/import": "Import dữ liệu",
   "/403": "Không có quyền truy cập",
-  "/users": "Người dùng",
+  "/users": "Quản lý người dùng",
   "/departments": "Phòng ban",
   "/procedures": "Thủ tục",
   "/settings": "Cài đặt",
@@ -149,7 +157,7 @@ function getInitials(user) {
     .toUpperCase();
 }
 
-function Header({ breadcrumbs, isMobileOpen, logoutLoading, onLogout, onToggleSidebar, user }) {
+function Header({ breadcrumbs, isMobileOpen, logoutLoading, onChangePassword, onLogout, onToggleSidebar, user }) {
   return (
     <header className="app-header">
       <div className="app-header__start">
@@ -181,6 +189,15 @@ function Header({ breadcrumbs, isMobileOpen, logoutLoading, onLogout, onToggleSi
             <span>{user?.email || user?.username}</span>
           </div>
           <button
+            aria-label="Đổi mật khẩu"
+            className="icon-button logout-button"
+            onClick={onChangePassword}
+            title="Đổi mật khẩu"
+            type="button"
+          >
+            <KeyRound size={17} />
+          </button>
+          <button
             aria-label="Đăng xuất"
             className="icon-button logout-button"
             disabled={logoutLoading}
@@ -205,6 +222,8 @@ function MainLayout() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [accountFeedback, setAccountFeedback] = useState("");
 
   function toggleSidebar() {
     if (window.matchMedia("(max-width: 760px)").matches) {
@@ -256,14 +275,30 @@ function MainLayout() {
           breadcrumbs={breadcrumbs}
           isMobileOpen={isMobileOpen}
           logoutLoading={logoutLoading}
+          onChangePassword={() => { setChangePasswordOpen(true); setAccountFeedback(""); }}
           onLogout={handleLogout}
           onToggleSidebar={toggleSidebar}
           user={user}
         />
         <main className="main-content">
+          {accountFeedback && (
+            <div className="layout-feedback" role="status">
+              <span>{accountFeedback}</span>
+              <button aria-label="Đóng thông báo" type="button" onClick={() => setAccountFeedback("")}>×</button>
+            </div>
+          )}
           <Outlet />
         </main>
       </div>
+      {changePasswordOpen && (
+        <ChangePasswordModal
+          onClose={() => setChangePasswordOpen(false)}
+          onSuccess={() => {
+            setChangePasswordOpen(false);
+            setAccountFeedback("Đổi mật khẩu thành công");
+          }}
+        />
+      )}
     </div>
   );
 }

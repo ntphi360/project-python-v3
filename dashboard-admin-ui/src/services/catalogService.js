@@ -19,7 +19,7 @@ export const getAgencies = async () => {
 };
 
 export const getUsers = async (departmentId) => {
-  const response = await api.get("/users", {
+  const response = await api.get("/user-options", {
     params: {
       department_id: departmentId,
     },

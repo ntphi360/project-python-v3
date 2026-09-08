@@ -358,6 +358,29 @@ button {
   max-width: 1440px;
 }
 
+.layout-feedback {
+  display: flex;
+  max-width: 1440px;
+  min-height: 38px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 8px 11px;
+  color: #167849;
+  background: #eaf8f1;
+  border: 1px solid #ccebdc;
+  border-radius: 8px;
+  font-size: 10.5px;
+}
+
+.layout-feedback button {
+  color: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
 @media (max-width: 900px) {
   .app-header,
   .main-content {

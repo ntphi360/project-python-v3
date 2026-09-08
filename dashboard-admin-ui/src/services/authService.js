@@ -26,3 +26,8 @@ export function initializeSession() {
 export async function logout() {
   await authApi.post("/logout");
 }
+
+export async function changePassword(passwords) {
+  const response = await authApi.post("/change-password", passwords);
+  return response.data;
+}
