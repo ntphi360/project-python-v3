@@ -9,6 +9,7 @@ from flask_migrate import upgrade
 
 from app.extensions import db
 from app.extensions import jwt
+from app.extensions import mail
 from app.extensions import migrate
 from app.cli import register_cli_commands
 from app.routes.auth import auth_bp, register_jwt_error_handlers
@@ -106,6 +107,18 @@ def create_app():
 
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+    app.config.update(
+        MAIL_SERVER=os.getenv("MAIL_SERVER", "").strip() or None,
+        MAIL_PORT=get_positive_int_env("MAIL_PORT", 587),
+        MAIL_USE_TLS=get_bool_env("MAIL_USE_TLS"),
+        MAIL_USE_SSL=get_bool_env("MAIL_USE_SSL"),
+        MAIL_USERNAME=os.getenv("MAIL_USERNAME", "").strip() or None,
+        MAIL_PASSWORD=os.getenv("MAIL_PASSWORD") or None,
+        MAIL_DEFAULT_SENDER=(
+            os.getenv("MAIL_DEFAULT_SENDER", "").strip() or None
+        ),
+    )
+
     jwt_secret = os.getenv("JWT_SECRET_KEY")
     if not jwt_secret:
         raise RuntimeError("JWT_SECRET_KEY chưa được cấu hình")
@@ -148,6 +161,7 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)  # Migrate schema database
     jwt.init_app(app)
+    mail.init_app(app)
     register_jwt_error_handlers(jwt)
     register_cli_commands(app)
     with app.app_context():

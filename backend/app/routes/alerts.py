@@ -15,6 +15,11 @@ from app.services.alert_service import (
     build_alert_item,
     current_time,
 )
+from app.services.email_service import (
+    EmailConfigurationError,
+    EmailDeliveryError,
+    send_case_reminder_email,
+)
 from app.utils.authorization import require_roles
 
 
@@ -211,7 +216,8 @@ def send_case_reminder(case_id):
             {"caseId": case_id},
         )
 
-    if build_alert_item(case, current_time()) is None:
+    alert_item = build_alert_item(case, current_time())
+    if alert_item is None:
         return error_response(
             "Hồ sơ hiện không thuộc danh sách cảnh báo",
             409,
@@ -258,10 +264,34 @@ def send_case_reminder(case_id):
             }
 
     if "EMAIL" in channels:
-        results["EMAIL"] = {
-            "success": False,
-            "error": "Email service chưa được cấu hình",
-        }
+        assignee_email = case.current_assignee.email
+        if not isinstance(assignee_email, str) or not assignee_email.strip():
+            results["EMAIL"] = {
+                "success": False,
+                "error": "Người nhận chưa có email",
+            }
+        else:
+            try:
+                send_case_reminder_email(
+                    recipient_email=assignee_email,
+                    case_code=case.external_case_code,
+                    case_name=case.applicant_name,
+                    procedure_name=(
+                        case.procedure.name if case.procedure else None
+                    ),
+                    due_at=case.due_at,
+                    alert_label=alert_item["alertLabel"],
+                    message=message,
+                    sender_name=(
+                        g.current_user.full_name or g.current_user.username
+                    ),
+                )
+                results["EMAIL"] = {"success": True}
+            except (EmailConfigurationError, EmailDeliveryError) as error:
+                results["EMAIL"] = {
+                    "success": False,
+                    "error": str(error),
+                }
 
     if "ZALO" in channels:
         results["ZALO"] = {

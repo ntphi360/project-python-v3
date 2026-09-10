@@ -32,12 +32,12 @@ const menuItems = [
     allowedRoles: MANAGEMENT_ROLES,
   },
   { label: "Thông báo", path: "/notifications", icon: Bell },
-  {
-    label: "Thống kê & Báo cáo",
-    path: "/reports",
-    icon: ChartNoAxesCombined,
-    allowedRoles: MANAGEMENT_ROLES,
-  },
+  // {
+  //   label: "Thống kê & Báo cáo",
+  //   path: "/reports",
+  //   icon: ChartNoAxesCombined,
+  //   allowedRoles: MANAGEMENT_ROLES,
+  // },
   {
     label: "Import dữ liệu",
     path: "/import",
@@ -60,7 +60,7 @@ const pageTitles = {
   "/cases": "Hồ sơ",
   "/alerts": "Cảnh báo",
   "/notifications": "Thông báo",
-  "/reports": "Thống kê & Báo cáo",
+  // "/reports": "Thống kê & Báo cáo",
   "/import": "Import dữ liệu",
   "/403": "Không có quyền truy cập",
   "/users": "Quản lý người dùng",
