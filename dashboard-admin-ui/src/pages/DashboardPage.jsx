@@ -13,21 +13,12 @@ import {
 } from "lucide-react";
 
 import {
-  CartesianGrid,
   Label,
-  Legend,
-  Line,
-  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
   Tooltip,
-  XAxis,
-  YAxis,
 } from "recharts";
-
-// Phần biểu đồ theo thời gian sẽ làm sau
-const timelineData = [];
 
 const chartTooltipStyle = {
   border: "1px solid #e4eaf2",
@@ -35,7 +26,6 @@ const chartTooltipStyle = {
   boxShadow: "0 6px 18px rgba(32, 56, 85, 0.1)",
   fontSize: 12,
 };
-
 
 function DonutCenterLabel({ total, viewBox }) {
   const { cx, cy } = viewBox ?? {};
@@ -70,7 +60,6 @@ function DonutCenterLabel({ total, viewBox }) {
   );
 }
 
-
 function DashboardPage() {
   const [summary, setSummary] = useState({
     total: 0,
@@ -84,7 +73,6 @@ function DashboardPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -148,7 +136,6 @@ function DashboardPage() {
     fetchDashboard();
   }, []);
 
-
   const kpiCards = useMemo(
     () => [
       {
@@ -187,12 +174,31 @@ function DashboardPage() {
     [summary]
   );
 
-
   const totalStatusCases = statusData.reduce(
     (total, item) => total + item.value,
     0
   );
 
+  const getPercentage = (value) => {
+    if (!summary.total) {
+      return 0;
+    }
+
+    return Math.round(
+      (value / summary.total) * 100
+    );
+  };
+
+  const getProgressWidth = (value) => {
+    if (!summary.total) {
+      return 0;
+    }
+
+    return Math.min(
+      (value / summary.total) * 100,
+      100
+    );
+  };
 
   if (loading) {
     return (
@@ -204,7 +210,6 @@ function DashboardPage() {
     );
   }
 
-
   if (error) {
     return (
       <section className="dashboard-page">
@@ -214,7 +219,6 @@ function DashboardPage() {
       </section>
     );
   }
-
 
   return (
     <section className="dashboard-page">
@@ -226,7 +230,6 @@ function DashboardPage() {
           trong hệ thống.
         </p>
       </div>
-
 
       <div
         className="kpi-grid"
@@ -288,7 +291,6 @@ function DashboardPage() {
         )}
       </div>
 
-
       <div className="dashboard-charts">
         <article className="dashboard-card dashboard-card--status-chart">
           <div className="dashboard-card__header">
@@ -302,7 +304,6 @@ function DashboardPage() {
               </p>
             </div>
           </div>
-
 
           <div
             className="status-chart"
@@ -356,7 +357,6 @@ function DashboardPage() {
               )}
             </div>
 
-
             <ul
               className="status-chart__legend"
               aria-label="Chú thích trạng thái hồ sơ"
@@ -400,116 +400,160 @@ function DashboardPage() {
           </div>
         </article>
 
-
-        <article className="dashboard-card dashboard-card--line-chart">
+        <article className="dashboard-card dashboard-card--processing">
           <div className="dashboard-card__header">
             <div>
               <h2>
-                Hồ sơ theo thời gian
+                Tình trạng xử lý hồ sơ
               </h2>
 
               <p>
-                Tình hình tiếp nhận và hoàn thành
-                gần đây
+                Tổng hợp các nhóm hồ sơ cần theo dõi
               </p>
             </div>
           </div>
 
-
           <div
-            className="timeline-chart"
-            aria-label="Biểu đồ hồ sơ theo thời gian"
+            className="processing-summary"
+            aria-label="Tình trạng xử lý hồ sơ"
           >
-            {timelineData.length > 0 ? (
-              <ResponsiveContainer
-                width="100%"
-                height="100%"
-              >
-                <LineChart
-                  data={timelineData}
-                  margin={{
-                    top: 8,
-                    right: 8,
-                    left: -18,
-                    bottom: 0,
-                  }}
-                >
-                  <CartesianGrid
-                    stroke="#e9eef5"
-                    strokeDasharray="3 3"
-                    vertical={false}
+            <div className="processing-summary__item">
+              <div className="processing-summary__info">
+                <div className="processing-summary__title">
+                  <span
+                    className="processing-summary__dot processing-summary__dot--upcoming"
+                    aria-hidden="true"
                   />
 
-                  <XAxis
-                    axisLine={false}
-                    dataKey="period"
-                    tick={{
-                      fill: "#7b899d",
-                      fontSize: 11,
-                    }}
-                    tickLine={false}
-                    tickMargin={10}
-                  />
+                  <span>
+                    Hồ sơ sắp hạn
+                  </span>
+                </div>
 
-                  <YAxis
-                    axisLine={false}
-                    tick={{
-                      fill: "#7b899d",
-                      fontSize: 11,
-                    }}
-                    tickLine={false}
-                    tickMargin={8}
-                  />
-
-                  <Tooltip
-                    contentStyle={
-                      chartTooltipStyle
-                    }
-                  />
-
-                  <Legend
-                    align="center"
-                    iconSize={9}
-                    iconType="circle"
-                    verticalAlign="bottom"
-                    wrapperStyle={{
-                      paddingTop: 8,
-                      fontSize: 10,
-                    }}
-                  />
-
-                  <Line
-                    activeDot={{ r: 5 }}
-                    dataKey="received"
-                    dot={{ r: 3 }}
-                    name="Hồ sơ tiếp nhận"
-                    stroke="#2775e8"
-                    strokeWidth={2.2}
-                    type="monotone"
-                    isAnimationActive={false}
-                  />
-
-                  <Line
-                    activeDot={{ r: 5 }}
-                    dataKey="completed"
-                    dot={{ r: 3 }}
-                    name="Hồ sơ hoàn thành"
-                    stroke="#22a667"
-                    strokeWidth={2.2}
-                    type="monotone"
-                    isAnimationActive={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="dashboard-empty">
-                Chưa có dữ liệu
+                <strong>
+                  {summary.upcoming.toLocaleString(
+                    "vi-VN"
+                  )}
+                </strong>
               </div>
-            )}
+
+              <div className="processing-summary__bar">
+                <div
+                  className="processing-summary__progress processing-summary__progress--upcoming"
+                  style={{
+                    width: `${getProgressWidth(
+                      summary.upcoming
+                    )}%`,
+                  }}
+                />
+              </div>
+
+              <div className="processing-summary__footer">
+                <span>
+                  {getPercentage(
+                    summary.upcoming
+                  )}
+                  % tổng hồ sơ
+                </span>
+
+                <span>
+                  Cần xử lý sớm
+                </span>
+              </div>
+            </div>
+
+            <div className="processing-summary__item">
+              <div className="processing-summary__info">
+                <div className="processing-summary__title">
+                  <span
+                    className="processing-summary__dot processing-summary__dot--overdue"
+                    aria-hidden="true"
+                  />
+
+                  <span>
+                    Hồ sơ quá hạn
+                  </span>
+                </div>
+
+                <strong>
+                  {summary.overdue.toLocaleString(
+                    "vi-VN"
+                  )}
+                </strong>
+              </div>
+
+              <div className="processing-summary__bar">
+                <div
+                  className="processing-summary__progress processing-summary__progress--overdue"
+                  style={{
+                    width: `${getProgressWidth(
+                      summary.overdue
+                    )}%`,
+                  }}
+                />
+              </div>
+
+              <div className="processing-summary__footer">
+                <span>
+                  {getPercentage(
+                    summary.overdue
+                  )}
+                  % tổng hồ sơ
+                </span>
+
+                <span>
+                  Đã quá hạn xử lý
+                </span>
+              </div>
+            </div>
+
+            <div className="processing-summary__item">
+              <div className="processing-summary__info">
+                <div className="processing-summary__title">
+                  <span
+                    className="processing-summary__dot processing-summary__dot--completed"
+                    aria-hidden="true"
+                  />
+
+                  <span>
+                    Đã hoàn thành
+                  </span>
+                </div>
+
+                <strong>
+                  {summary.completed.toLocaleString(
+                    "vi-VN"
+                  )}
+                </strong>
+              </div>
+
+              <div className="processing-summary__bar">
+                <div
+                  className="processing-summary__progress processing-summary__progress--completed"
+                  style={{
+                    width: `${getProgressWidth(
+                      summary.completed
+                    )}%`,
+                  }}
+                />
+              </div>
+
+              <div className="processing-summary__footer">
+                <span>
+                  {getPercentage(
+                    summary.completed
+                  )}
+                  % tổng hồ sơ
+                </span>
+
+                <span>
+                  Đã xử lý xong
+                </span>
+              </div>
+            </div>
           </div>
         </article>
       </div>
-
 
       <article className="dashboard-card records-card">
         <div className="dashboard-card__header">
@@ -526,7 +570,6 @@ function DashboardPage() {
             Xem tất cả
           </Link>
         </div>
-
 
         <div className="records-table-wrap">
           <table className="records-table">
@@ -557,7 +600,6 @@ function DashboardPage() {
                 </th>
               </tr>
             </thead>
-
 
             <tbody>
               {attentionCases.map(
@@ -618,6 +660,5 @@ function DashboardPage() {
     </section>
   );
 }
-
 
 export default DashboardPage;
