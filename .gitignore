@@ -116,6 +116,7 @@ activemq-data/
 .env
 .env.*
 !backend/.env.example
+!dashboard-admin-ui/.env.example
 .envrc
 .venv/
 venv/

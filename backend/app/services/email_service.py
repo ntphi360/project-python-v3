@@ -1,4 +1,5 @@
 from html import escape
+from threading import Thread
 
 from flask import current_app
 from flask_mail import Message
@@ -12,6 +13,29 @@ class EmailConfigurationError(Exception):
 
 class EmailDeliveryError(Exception):
     pass
+
+
+def _send_email_async(app, message):
+    with app.app_context():
+        try:
+            mail.send(message)
+        except Exception:
+            app.logger.exception(
+                "Flask-Mail gửi email bất đồng bộ thất bại. "
+                "recipients=%s subject=%s",
+                message.recipients,
+                message.subject,
+            )
+
+
+def send_email_async(message):
+    app = current_app._get_current_object()
+    thread = Thread(
+        target=_send_email_async,
+        args=(app, message),
+        daemon=True,
+    )
+    thread.start()
 
 
 def format_due_at(due_at):
@@ -109,15 +133,4 @@ def send_case_reminder_email(
         ),
     )
 
-    try:
-        mail.send(email_message)
-    except Exception as error:
-        current_app.logger.error(
-            "Flask-Mail gửi email thất bại. "
-            "case=%s recipient=%s error_type=%s error=%s",
-            case_code,
-            normalized_recipient,
-            type(error).__name__,
-            str(error),
-        )
-        raise EmailDeliveryError("Không thể gửi email nhắc nhở") from error
+    send_email_async(email_message)
