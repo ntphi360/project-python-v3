@@ -78,3 +78,29 @@
   .alerts-filter-card .cases-filter-card__actions { grid-column: auto; }
   .reminder-channels > div { align-items: flex-start; flex-direction: column; }
 }
+
+.alerts-row--clickable {
+  cursor: pointer;
+}
+
+.alerts-row--clickable td {
+  transition:
+    background-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.alerts-row--clickable:hover td {
+  background-color: #f8fafc;
+}
+
+.alerts-row--clickable:hover td:first-child {
+  box-shadow: inset 3px 0 0 #2775e8;
+}
+
+.alerts-row--clickable:active td {
+  background-color: #f1f5f9;
+}
+
+.alerts-row:not(.alerts-row--clickable) {
+  cursor: default;
+}
