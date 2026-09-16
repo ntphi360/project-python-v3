@@ -40,7 +40,7 @@ def clean_text(value):
 
 # đọc file
 def import_case_file(file):
-    filename = file.filename.lower()
+    filename = file.filename.lower() #AAAAA.XLS -> aaaa.xls
 
     if filename.endswith(".csv"):
         df = pd.read_csv(
@@ -77,7 +77,7 @@ def import_case_file(file):
     missing_columns = [
         column
         for column in required_columns
-        if column not in df.columns
+        if column not in df.columns     # true - false
     ]
 
     if missing_columns:
