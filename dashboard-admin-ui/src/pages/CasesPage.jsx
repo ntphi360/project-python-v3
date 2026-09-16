@@ -28,6 +28,7 @@ import {
   getUsers,
 } from "../services/catalogService";
 import { getApiErrorMessage } from "../utils/apiError";
+import { getPaginationItems } from "../utils/pagination";
 import "./CasesPage.css";
 
 const PAGE_SIZE = 10;
@@ -611,6 +612,7 @@ function CasesPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [reloadVersion, setReloadVersion] = useState(0);
+  const totalPages = Math.max(pagination.totalPages, 1);
 
   useEffect(() => {
     let cancelled = false;
@@ -803,7 +805,29 @@ function CasesPage() {
                 </tbody>
               </table>
             </div>
-            <div className="cases-pagination"><span>Trang {pagination.page} / {pagination.totalPages}</span><div><button aria-label="Trang trước" disabled={!pagination.hasPrev} type="button" onClick={() => setCurrentPage((page) => page - 1)}><ChevronLeft size={16} /> Previous</button><button aria-label="Trang sau" disabled={!pagination.hasNext} type="button" onClick={() => setCurrentPage((page) => page + 1)}>Next <ChevronRight size={16} /></button></div></div>
+            <div className="cases-pagination">
+              <span>Trang {pagination.page} / {totalPages}</span>
+              <div className="cases-pagination__controls">
+                <button aria-label="Trang trước" disabled={currentPage === 1} type="button" onClick={() => setCurrentPage((page) => page - 1)}><ChevronLeft size={16} /> Previous</button>
+                {getPaginationItems(currentPage, totalPages).map((page) => (
+                  typeof page === "number" ? (
+                    <button
+                      aria-current={page === currentPage ? "page" : undefined}
+                      aria-label={`Trang ${page}`}
+                      className={`cases-pagination__page${page === currentPage ? " cases-pagination__page--active" : ""}`}
+                      key={page}
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </button>
+                  ) : (
+                    <span aria-hidden="true" className="cases-pagination__ellipsis" key={page}>...</span>
+                  )
+                ))}
+                <button aria-label="Trang sau" disabled={currentPage === totalPages} type="button" onClick={() => setCurrentPage((page) => page + 1)}>Next <ChevronRight size={16} /></button>
+              </div>
+            </div>
           </>
         )}
       </article>

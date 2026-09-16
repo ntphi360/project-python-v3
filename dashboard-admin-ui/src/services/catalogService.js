@@ -1,29 +1,29 @@
 import api from "./api";
 
 export const getProcedures = async () => {
-  const response = await api.get("/procedures");
+    const response = await api.get("/procedures");
 
-  return response.data.data;
+    return response.data.data;
 };
 
 export const getDepartments = async () => {
-  const response = await api.get("/departments");
+    const response = await api.get("/departments");
 
-  return response.data.data;
+    return response.data.data;
 };
 
 export const getAgencies = async () => {
-  const response = await api.get("/agencies");
+    const response = await api.get("/agencies");
 
-  return response.data.data;
+    return response.data.data;
 };
 
 export const getUsers = async (departmentId) => {
-  const response = await api.get("/user-options", {
-    params: {
-      department_id: departmentId,
-    },
-  });
+    const response = await api.get("/user-options", {
+        params: {
+            department_id: departmentId,
+        },
+    });
 
-  return response.data.data;
+    return response.data.data;
 };
