@@ -8,7 +8,7 @@ from app.models.procedure_field import ProcedureField
 from app.models.user import User
 
 
-# format date
+# xử lý date
 def parse_date(value):
     if pd.isna(value):
         return None
@@ -25,7 +25,7 @@ def parse_date(value):
     return value.to_pydatetime()
 
 
-# xử lý dữ liệu
+# xử lý text
 def clean_text(value):
     if pd.isna(value):
         return None
@@ -38,10 +38,11 @@ def clean_text(value):
     return value
 
 
-# đọc file
+# import file
 def import_case_file(file):
-    filename = file.filename.lower() #AAAAA.XLS -> aaaa.xls
+    filename = file.filename.lower()
 
+    # đọc file
     if filename.endswith(".csv"):
         df = pd.read_csv(
             file,
@@ -56,13 +57,23 @@ def import_case_file(file):
             "Chỉ hỗ trợ file CSV, XLSX hoặc XLS"
         )
 
-    # xóa dòng/cột hoàn toàn rỗng
-    df = df.dropna(axis=1, how="all")
-    df = df.dropna(how="all")
+    # xử lys dòng và cột rỗng
+    df = df.dropna(
+        axis=1,
+        how="all"
+    )
 
-    # xử lý tên cột
-    df.columns = df.columns.str.strip()
+    df = df.dropna(
+        how="all"
+    )
 
+    df.columns = (
+        df.columns
+        .astype(str)
+        .str.strip()
+    )
+
+    # cột dữ liệu
     required_columns = [
         "Số hồ sơ",
         "Tên thủ tục hành chính",
@@ -77,7 +88,7 @@ def import_case_file(file):
     missing_columns = [
         column
         for column in required_columns
-        if column not in df.columns     # true - false
+        if column not in df.columns
     ]
 
     if missing_columns:
@@ -86,13 +97,136 @@ def import_case_file(file):
             + ", ".join(missing_columns)
         )
 
+    # lấy dữ diệu từ file
+    case_codes = {
+        clean_text(value)
+        for value in df["Số hồ sơ"]
+        if clean_text(value)
+    }
+
+    field_names = {
+        clean_text(value)
+        for value in df["Tên lĩnh vực"]
+        if clean_text(value)
+    }
+
+    procedure_names = {
+        clean_text(value)
+        for value in df["Tên thủ tục hành chính"]
+        if clean_text(value)
+    }
+
+    department_names = {
+        clean_text(value)
+        for value in df["Phòng ban"]
+        if clean_text(value)
+    }
+
+    assignee_names = {
+        clean_text(value)
+        for value in df["Cán bộ xử lý hiện tại"]
+        if clean_text(value)
+    }
+
+    # 5. query dữ liệu có sẵn
+    existing_cases = {}
+
+    if case_codes:
+        case_records = (
+            Case.query
+            .filter(
+                Case.external_case_code.in_(
+                    case_codes
+                )
+            )
+            .all()
+        )
+
+        existing_cases = {
+            case.external_case_code: case
+            for case in case_records
+        }
+
+    fields = {}
+
+    if field_names:
+        field_records = (
+            ProcedureField.query
+            .filter(
+                ProcedureField.name.in_(
+                    field_names
+                )
+            )
+            .all()
+        )
+
+        fields = {
+            field.name: field
+            for field in field_records
+        }
+
+    procedures = {}
+
+    if procedure_names:
+        procedure_records = (
+            Procedure.query
+            .filter(
+                Procedure.name.in_(
+                    procedure_names
+                )
+            )
+            .all()
+        )
+
+        procedures = {
+            procedure.name: procedure
+            for procedure in procedure_records
+        }
+
+    departments = {}
+
+    if department_names:
+        department_records = (
+            Department.query
+            .filter(
+                Department.name.in_(
+                    department_names
+                )
+            )
+            .all()
+        )
+
+        departments = {
+            department.name: department
+            for department in department_records
+        }
+
+    users = {}
+
+    if assignee_names:
+        user_records = (
+            User.query
+            .filter(
+                User.full_name.in_(
+                    assignee_names
+                )
+            )
+            .all()
+        )
+
+        users = {
+            user.full_name: user
+            for user in user_records
+        }
+
     imported = 0
     skipped = 0
 
     try:
+        # duyệt liệu
         for _, row in df.iterrows():
 
-            # mã hồ sơ
+            # MÃ HỒ SƠ
             case_code = clean_text(
                 row.get("Số hồ sơ")
             )
@@ -101,12 +235,8 @@ def import_case_file(file):
                 skipped += 1
                 continue
 
-            # hồ sơ đã tồn tại
-            existing_case = Case.query.filter_by(
-                external_case_code=case_code
-            ).first()
-
-            if existing_case:
+            # check tồn tại
+            if case_code in existing_cases:
                 skipped += 1
                 continue
 
@@ -118,9 +248,9 @@ def import_case_file(file):
             procedure_field = None
 
             if field_name:
-                procedure_field = ProcedureField.query.filter_by(
-                    name=field_name
-                ).first()
+                procedure_field = fields.get(
+                    field_name
+                )
 
                 if not procedure_field:
                     procedure_field = ProcedureField(
@@ -128,37 +258,55 @@ def import_case_file(file):
                         is_active=True
                     )
 
-                    db.session.add(procedure_field)
+                    db.session.add(
+                        procedure_field
+                    )
+
                     db.session.flush()
 
-            # procedure
+                    fields[
+                        field_name
+                    ] = procedure_field
+
+            # thủ tục
             procedure_name = clean_text(
-                row.get("Tên thủ tục hành chính")
+                row.get(
+                    "Tên thủ tục hành chính"
+                )
             )
 
             procedure = None
 
             if procedure_name:
-                procedure = Procedure.query.filter_by(
-                    name=procedure_name
-                ).first()
+                procedure = procedures.get(
+                    procedure_name
+                )
 
                 if not procedure:
                     procedure = Procedure(
                         name=procedure_name,
+
                         procedure_field_id=(
                             procedure_field.id
                             if procedure_field
                             else None
                         ),
+
                         default_processing_hours=0,
                         is_active=True
                     )
 
-                    db.session.add(procedure)
+                    db.session.add(
+                        procedure
+                    )
+
                     db.session.flush()
 
-            # department
+                    procedures[
+                        procedure_name
+                    ] = procedure
+
+            # phòng ban
             department_name = clean_text(
                 row.get("Phòng ban")
             )
@@ -166,9 +314,9 @@ def import_case_file(file):
             department = None
 
             if department_name:
-                department = Department.query.filter_by(
-                    name=department_name
-                ).first()
+                department = departments.get(
+                    department_name
+                )
 
                 if not department:
                     department = Department(
@@ -176,36 +324,54 @@ def import_case_file(file):
                         is_active=True
                     )
 
-                    db.session.add(department)
+                    db.session.add(
+                        department
+                    )
+
                     db.session.flush()
 
-            # staff
+                    departments[
+                        department_name
+                    ] = department
+
+            # cán bộ xử lý
             assignee_name = clean_text(
-                row.get("Cán bộ xử lý hiện tại")
+                row.get(
+                    "Cán bộ xử lý hiện tại"
+                )
             )
 
             assignee = None
 
             if assignee_name:
-                assignee = User.query.filter_by(
-                    full_name=assignee_name
-                ).first()
+                assignee = users.get(
+                    assignee_name
+                )
 
                 if not assignee:
                     assignee = User(
                         full_name=assignee_name,
+
                         department_id=(
                             department.id
                             if department
                             else None
                         ),
+
                         is_active=True
                     )
 
-                    db.session.add(assignee)
+                    db.session.add(
+                        assignee
+                    )
+
                     db.session.flush()
 
-            # case
+                    users[
+                        assignee_name
+                    ] = assignee
+
+            # tạo hồ sơ
             case = Case(
                 external_case_code=case_code,
 
@@ -252,7 +418,9 @@ def import_case_file(file):
                 ),
 
                 completed_at=parse_date(
-                    row.get("Ngày kết thúc xử lý")
+                    row.get(
+                        "Ngày kết thúc xử lý"
+                    )
                 ),
 
                 status=clean_text(
@@ -263,9 +431,15 @@ def import_case_file(file):
             )
 
             db.session.add(case)
+
+            # store vào cache tránh bị trùng dữ liệu trong file
+            existing_cases[
+                case_code
+            ] = case
+
             imported += 1
 
-        # commit - xác nhận lưu vào db
+        # commit -> lưu vào db
         db.session.commit()
 
     except Exception:
