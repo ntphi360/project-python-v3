@@ -164,8 +164,8 @@ def create_app():
     mail.init_app(app)
     register_jwt_error_handlers(jwt)
     register_cli_commands(app)
-    with app.app_context():
-        upgrade()
+    # with app.app_context():
+    #     upgrade()
 
     CORS(
         app,
