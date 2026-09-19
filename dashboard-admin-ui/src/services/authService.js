@@ -3,8 +3,21 @@ import {authApi, refreshAccessToken} from "./api";
 let initializationPromise = null;
 
 export async function login(credentials) {
-    const response = await authApi.post("/login", credentials);
-    return response.data.data;
+    const response = await authApi.post(
+        "/login",
+        credentials
+    );
+
+    const data = response.data.data;
+
+    if (data?.refreshCsrfToken) {
+        sessionStorage.setItem(
+            "refreshCsrfToken",
+            data.refreshCsrfToken
+        );
+    }
+
+    return data;
 }
 
 export async function getCurrentUser() {

@@ -34,13 +34,11 @@ function getRefreshHeaders() {
         "refreshCsrfToken"
     );
 
-    if (!csrfToken) {
-        return {};
-    }
-
-    return {
-        "X-CSRF-TOKEN": csrfToken,
-    };
+    return csrfToken
+        ? {
+            "X-CSRF-TOKEN": csrfToken
+        }
+        : {};
 }
 
 
