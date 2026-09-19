@@ -45,7 +45,6 @@ const caseStatuses = [
     "Đang xử lý",
     "Sắp hạn",
     "Quá hạn",
-    "Hoàn thành",
     "Đã hoàn thành",
 ];
 
@@ -180,7 +179,6 @@ function StatusBadge({status}) {
         "Đang xử lý": "processing",
         "Sắp hạn": "upcoming",
         "Quá hạn": "overdue",
-        "Hoàn thành": "completed",
         "Đã hoàn thành": "completed",
     };
 
