@@ -1,27 +1,40 @@
 from flask import Blueprint, current_app, g, jsonify, make_response, request
+
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
-    get_csrf,
+    decode_token,
     jwt_required,
     set_refresh_cookies,
     unset_refresh_cookies,
 )
+
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.extensions import db
 from app.models.user import User
-from app.utils.authorization import authenticated_user_required, load_current_user
+from app.utils.authorization import (
+    authenticated_user_required,
+    load_current_user,
+)
 
 
-auth_bp = Blueprint("auth", __name__)
+auth_bp = Blueprint(
+    "auth",
+    __name__
+)
 
 PASSWORD_MIN_LENGTH = 8
 PASSWORD_MAX_LENGTH = 1024
 
 
-def success_response(data, message, status_code=200):
+# RESPONSE THÀNH CÔNG
+def success_response(
+    data,
+    message,
+    status_code=200
+):
     return jsonify({
         "success": True,
         "data": data,
@@ -30,7 +43,12 @@ def success_response(data, message, status_code=200):
     }), status_code
 
 
-def error_response(message, status_code, errors=None):
+# RESPONSE THẤT BẠI
+def error_response(
+    message,
+    status_code,
+    errors=None
+):
     return jsonify({
         "success": False,
         "data": None,
@@ -39,6 +57,7 @@ def error_response(message, status_code, errors=None):
     }), status_code
 
 
+# CHUYỂN USER THÀNH JSON
 def serialize_user(user):
     return {
         "id": user.id,
@@ -51,7 +70,9 @@ def serialize_user(user):
     }
 
 
+# XỬ LÝ LỖI JWT
 def register_jwt_error_handlers(jwt):
+
     @jwt.unauthorized_loader
     def handle_missing_token(_reason):
         return error_response(
@@ -67,30 +88,41 @@ def register_jwt_error_handlers(jwt):
         )
 
     @jwt.expired_token_loader
-    def handle_expired_token(_header, _payload):
+    def handle_expired_token(
+        _header,
+        _payload
+    ):
         return error_response(
             "Token xác thực đã hết hạn",
             401,
         )
 
     @jwt.revoked_token_loader
-    def handle_revoked_token(_header, _payload):
+    def handle_revoked_token(
+        _header,
+        _payload
+    ):
         return error_response(
             "Token xác thực đã bị thu hồi",
             401,
         )
 
 
+# ĐĂNG NHẬP
 @auth_bp.post("/login")
 def login():
-    payload = request.get_json(silent=True)
+    payload = request.get_json(
+        silent=True
+    )
 
     if not isinstance(payload, dict):
         return error_response(
             "Dữ liệu JSON không hợp lệ",
             400,
             {
-                "body": "Request body phải là một JSON object"
+                "body": (
+                    "Request body phải là một JSON object"
+                )
             },
         )
 
@@ -111,19 +143,22 @@ def login():
     )
 
     if not has_email and not has_username:
-        validation_errors["identifier"] = (
-            "Email hoặc username là bắt buộc"
-        )
+        validation_errors[
+            "identifier"
+        ] = "Email hoặc username là bắt buộc"
 
-    if not isinstance(password, str) or not password:
-        validation_errors["password"] = (
-            "Mật khẩu là bắt buộc"
-        )
+    if (
+        not isinstance(password, str)
+        or not password
+    ):
+        validation_errors[
+            "password"
+        ] = "Mật khẩu là bắt buộc"
 
     elif len(password) > PASSWORD_MAX_LENGTH:
-        validation_errors["password"] = (
-            "Mật khẩu không hợp lệ"
-        )
+        validation_errors[
+            "password"
+        ] = "Mật khẩu không hợp lệ"
 
     if validation_errors:
         return error_response(
@@ -132,6 +167,7 @@ def login():
             validation_errors,
         )
 
+    # TÌM USER THEO EMAIL
     if has_email:
         identifier = email.strip()
 
@@ -140,6 +176,7 @@ def login():
             == identifier.lower()
         ).first()
 
+    # TÌM USER THEO USERNAME
     else:
         identifier = username.strip()
 
@@ -148,12 +185,17 @@ def login():
             == identifier.lower()
         ).first()
 
-    if not user or not user.check_password(password):
+    # KIỂM TRA TÀI KHOẢN
+    if (
+        not user
+        or not user.check_password(password)
+    ):
         return error_response(
             "Email/username hoặc mật khẩu không chính xác",
             401,
         )
 
+    # KIỂM TRA TRẠNG THÁI USER
     if user.is_active is not True:
         return error_response(
             "Tài khoản đã bị vô hiệu hóa",
@@ -171,9 +213,13 @@ def login():
         identity=identity
     )
 
-    # LẤY CSRF TOKEN CỦA REFRESH TOKEN
-    refresh_csrf_token = get_csrf(
+    # LẤY CSRF TOKEN TỪ REFRESH TOKEN
+    decoded_refresh_token = decode_token(
         refresh_token
+    )
+
+    refresh_csrf_token = (
+        decoded_refresh_token.get("csrf")
     )
 
     # TẠO RESPONSE
@@ -184,20 +230,21 @@ def login():
             "data": {
                 "accessToken": access_token,
 
-                "refreshCsrfToken": (
-                    refresh_csrf_token
-                ),
+                "refreshCsrfToken":
+                    refresh_csrf_token,
 
                 "user": serialize_user(user),
             },
 
-            "message": "Đăng nhập thành công",
+            "message":
+                "Đăng nhập thành công",
+
             "errors": None,
         }),
         200
     )
 
-    # LƯU REFRESH TOKEN VÀO HTTPONLY COOKIE
+    # LƯU REFRESH TOKEN VÀO COOKIE
     set_refresh_cookies(
         response,
         refresh_token
@@ -206,6 +253,7 @@ def login():
     return response
 
 
+# LÀM MỚI ACCESS TOKEN
 @auth_bp.post("/refresh")
 @jwt_required(
     refresh=True,
@@ -238,23 +286,28 @@ def refresh_access_token():
     )
 
 
+# ĐĂNG XUẤT
 @auth_bp.post("/logout")
 def logout():
     response = make_response(
         jsonify({
             "success": True,
             "data": None,
-            "message": "Đăng xuất thành công",
+            "message":
+                "Đăng xuất thành công",
             "errors": None,
         }),
         200
     )
 
-    unset_refresh_cookies(response)
+    unset_refresh_cookies(
+        response
+    )
 
     return response
 
 
+# LẤY USER HIỆN TẠI
 @auth_bp.get("/me")
 @jwt_required(
     locations=["headers"]
@@ -280,10 +333,13 @@ def get_current_user():
     )
 
 
+# ĐỔI MẬT KHẨU
 @auth_bp.post("/change-password")
 @authenticated_user_required
 def change_password():
-    payload = request.get_json(silent=True)
+    payload = request.get_json(
+        silent=True
+    )
 
     if not isinstance(payload, dict):
         return error_response(
@@ -305,41 +361,64 @@ def change_password():
 
     validation_errors = {}
 
+    # KIỂM TRA MẬT KHẨU HIỆN TẠI
     if (
-        not isinstance(current_password, str)
+        not isinstance(
+            current_password,
+            str
+        )
         or not current_password
     ):
-        validation_errors["currentPassword"] = (
-            "Mật khẩu hiện tại là bắt buộc"
-        )
+        validation_errors[
+            "currentPassword"
+        ] = "Mật khẩu hiện tại là bắt buộc"
 
+    # KIỂM TRA MẬT KHẨU MỚI
     if (
-        not isinstance(new_password, str)
+        not isinstance(
+            new_password,
+            str
+        )
         or not new_password
     ):
-        validation_errors["newPassword"] = (
-            "Mật khẩu mới là bắt buộc"
-        )
+        validation_errors[
+            "newPassword"
+        ] = "Mật khẩu mới là bắt buộc"
 
-    elif len(new_password) < PASSWORD_MIN_LENGTH:
-        validation_errors["newPassword"] = (
+    elif (
+        len(new_password)
+        < PASSWORD_MIN_LENGTH
+    ):
+        validation_errors[
+            "newPassword"
+        ] = (
             f"Mật khẩu mới phải có ít nhất "
             f"{PASSWORD_MIN_LENGTH} ký tự"
         )
 
-    elif len(new_password) > PASSWORD_MAX_LENGTH:
-        validation_errors["newPassword"] = (
+    elif (
+        len(new_password)
+        > PASSWORD_MAX_LENGTH
+    ):
+        validation_errors[
+            "newPassword"
+        ] = (
             f"Mật khẩu mới không vượt quá "
             f"{PASSWORD_MAX_LENGTH} ký tự"
         )
 
+    # KIỂM TRA XÁC NHẬN MẬT KHẨU
     if (
-        not isinstance(confirm_password, str)
-        or confirm_password != new_password
-    ):
-        validation_errors["confirmPassword"] = (
-            "Xác nhận mật khẩu không khớp"
+        not isinstance(
+            confirm_password,
+            str
         )
+        or confirm_password
+        != new_password
+    ):
+        validation_errors[
+            "confirmPassword"
+        ] = "Xác nhận mật khẩu không khớp"
 
     if validation_errors:
         return error_response(
@@ -348,6 +427,7 @@ def change_password():
             validation_errors,
         )
 
+    # KIỂM TRA MẬT KHẨU CŨ
     if not g.current_user.check_password(
         current_password
     ):
@@ -360,6 +440,7 @@ def change_password():
             },
         )
 
+    # CẬP NHẬT MẬT KHẨU
     g.current_user.set_password(
         new_password
     )
